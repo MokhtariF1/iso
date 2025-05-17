@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>سامانه مرجع استاندارد ها</title>
+  <script src="data.js"></script>
+  <link href="https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css" rel="stylesheet">;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>;
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js">;
+
+</script>
+  <style>
+    body {
+      font-family: 'Vazir', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 30px 20px 80px;
+      direction: rtl;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    :root {
+      --bg: #f4f6f9;
+      --text: #222;
+      --card-bg: #fff;
+    }
+
+    .dark {
+      --bg: #121212;
+      --text: #f1f1f1;
+      --card-bg: #1e1e1e;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1565c0;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    select, input[type="text"] {
+      flex: 1 1 200px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .icon-btn input[type="file"] {
+  display: none;
+}
+
+    .icon-btn {
+  background: #f2f2f2;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.icon-btn:hover {
+  background: #e0e0e0;
+  transform: scale(1.05);
+}
+
+  
+footer {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      background: none;
+      color: #666;
+      padding: 15px 20px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #0d47a1;
+    }
+
+    .desc {
+      margin: 8px 0;
+      color: var(--text);
+    }
+
+    .details {
+      display: none;
+      font-size: 14px;
+      color: #555;
+      margin-top: 10px;
+    }
+
+    .card.open .details {
+      display: block;
+    }
+
+    .details a {
+      display: inline-block;
+      margin-top: 10px;
+      color: #1976d2;
+      text-decoration: none;
+    }
+
+    .favorite-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: #ff9800;
+    }
+
+    .favorites-toggle {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .favorites-toggle button {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .pagination {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .pagination button {
+      margin: 0 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .pagination button.active {
+      background: #1565c0;
+      color: #fff;
+    }
+
+    .dashboard-panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 280px;
+      z-index: 999;
+      display: none;
+    }
+
+    .dashboard-panel h3 {
+      margin-top: 0;
+      color: #1565c0;
+    }
+
+    .dashboard-panel ul {
+      padding: 0;
+      list-style: none;
+      font-size: 14px;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    .status-label {
+  position: absolute;
+  top: 10px;
+  right: 180px;
+  font-size: 13px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+  font-weight: 500;
+  background-color: #eee;
+  color: #333;
+}
+
+.status-label::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-review {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.status-expired {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.upload-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1976d2;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.upload-label:hover {
+  background: #135ba1;
+}
+
+#matchResult {
+  margin-top: 30px;
+  padding: 24px;
+  background: var(--card-bg);
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  direction: rtl;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+#matchResult h3 {
+  margin-top: 0;
+  color: #1565c0;
+  font-size: 18px;
+}
+
+#matchResult h4 {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #0d47a1;
+}
+
+#matchResult ul {
+  margin: 10px 0 0 0;
+  padding-right: 20px;
+  list-style: square;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+#matchResult li a {
+  color: #1976d2;
+  text-decoration: none;
+  margin-right: 6px;
+}
+
+#matchResult li a:hover {
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+  </style>
+</head>
+<body>
+  <h1>سامانه مرجع استاندارد ها</h1>
+
+    <footer>
+    <div>BNP Developer Group</div>
+    <div id="liveDate"></div>
+    <div>1.1</div>
+  </footer>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="جستجوی استاندارد ...">
+  <select id="filter">
+    <option value="all">......</option>
+    <option value="quality">کیفیت</option>
+    <option value="safety">ایمنی</option>
+    <option value="environment">محیط زیست</option>
+    <option value="food">ایمنی غذایی</option>
+    <option value="security">امنیت اطلاعات</option>
+    <option value="cables">کابل</option>
+    <option value="cable_tray">سینی کابل</option>
+  </select>
+  <button class="icon-btn" onclick="toggleDarkMode()" title="حالت تیره/روشن">
+    <i id="themeIcon" data-lucide="moon"></i>
+  </button>
+  <button class="icon-btn" onclick="toggleDashboard()" title="تنظیمات">
+    <i data-lucide="settings"></i>
+  </button>
+  <button class="icon-btn" onclick="downloadPDF()" title="دانلود PDF">
+    <i data-lucide="download"></i>
+  </button>
+<label for="uploadTxt" class="icon-btn" title="آپلود فایل txt">
+  <i data-lucide="file-plus"></i>
+</label>
+<input type="file" id="uploadTxt" accept=".txt" hidden />
+
+</div>
+
+  <div class="favorites-toggle">
+    <button onclick="toggleFavorites()">نمایش علاقه‌ مندی‌ ها</button>
+  </div>
+
+  <div id="container"></div>
+  <div class="pagination" id="pagination"></div>
+
+  <div class="dashboard-panel" id="dashboardPanel">
+    <h3>داشبورد مدیریتی</h3>
+    <ul>
+      <li>📦 تعداد کل استانداردها: <span id="totalCount">0</span></li>
+      <li>⭐ علاقه‌ مندی‌ ها: <span id="favCount">0</span></li>
+      <li>🔎 جستجوی فعلی: <span id="searchTerm">---</span></li>
+      <li>🗂 دسته انتخاب‌ شده: <span id="activeFilter">همه</span></li>
+      <li>📄 صفحه فعلی: <span id="currentPageInfo">1</span></li>
+      <li><button onclick="toggleDashboard()" style="margin-top:10px;background:#f44336;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;width:100%">بستن</button></li>
+</ul>
+
+
+
+  <script>
+    const itemsPerPage = 15;
+    let currentPage = 1;
+    let showFavoritesOnly = false;
+
+    const container = document.getElementById("container");
+    const searchInput = document.getElementById("search");
+    const filterSelect = document.getElementById("filter");
+    const pagination = document.getElementById("pagination");
+
+    function getFavorites() {
+      return JSON.parse(localStorage.getItem("isoFavorites") || "[]");
+    }
+
+    function toggleFavorite(code) {
+      let favorites = getFavorites();
+      if (favorites.includes(code)) {
+        favorites = favorites.filter(c => c !== code);
+      } else {
+        favorites.push(code);
+      }
+      localStorage.setItem("isoFavorites", JSON.stringify(favorites));
+      render();
+    }
+
+    function toggleFavorites() {
+      showFavoritesOnly = !showFavoritesOnly;
+      currentPage = 1;
+      render();
+    }
+
+    function getStatuses() {
+  return JSON.parse(localStorage.getItem("isoStatuses") || "{}");
+}
+
+function setStatus(code, status) {
+  const statuses = getStatuses();
+  statuses[code] = status;
+  localStorage.setItem("isoStatuses", JSON.stringify(statuses));
+  render();
+}
+
+
+    function renderPagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      pagination.innerHTML = "";
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add("active");
+        btn.onclick = () => {
+          currentPage = i;
+          render();
+        };
+        pagination.appendChild(btn);
+      }
+    }
+
+    function render() {
+      const search = searchInput.value.toLowerCase();
+      const filter = filterSelect.value;
+      const favorites = getFavorites();
+
+      const filtered = data.filter(item => {
+        const matchesSearch = item.code.toLowerCase().includes(search) || item.desc.includes(search);
+        const matchesFilter = filter === "all" || item.category === filter;
+        const isFavorite = favorites.includes(item.code);
+        return matchesSearch && matchesFilter && (!showFavoritesOnly || isFavorite);
+      });
+
+      renderPagination(filtered.length);
+
+      const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+      container.innerHTML = "";
+      paginatedItems.forEach(item => {
+        const div = document.createElement("div");
+div.className = "card";
+
+const statuses = getStatuses();
+const status = statuses[item.code];
+
+let statusHTML = "";
+if (status === "review") {
+  statusHTML = `<div class="status-label status-review">در حال بازبینی</div>`;
+} else if (status === "expired") {
+  statusHTML = `<div class="status-label status-expired">منقضی‌شده</div>`;
+}
+
+div.innerHTML = `
+  <button class="favorite-btn" onclick="toggleFavorite('${item.code}')">
+    <i data-lucide="${favorites.includes(item.code) ? 'star' : 'star-off'}"></i>
+  </button>
+  ${statusHTML}
+  <div class="title">${item.code}</div>
+  <div class="desc">${item.desc}</div>
+  <div class="details">
+    ${item.details}<br>
+    <a href="${item.link}" target="_blank">مشاهده در سایت</a>
+    <div style="margin-top:10px;">
+      <label style="font-size: 13px;">وضعیت:</label>
+      <select onchange="setStatus('${item.code}', this.value)">
+        <option value="">---</option>
+        <option value="review" ${status === "review" ? "selected" : ""}>در حال بازبینی</option>
+        <option value="expired" ${status === "expired" ? "selected" : ""}>منقضی‌شده</option>
+      </select>
+    </div>
+  </div>
+`;
+
+div.addEventListener("click", e => {
+  if (!e.target.closest("button") && !e.target.closest("select")) {
+    div.classList.toggle("open");
+  }
+});
+container.appendChild(div);
+
+      });
+
+      lucide.createIcons();
+    }
+
+    function toggleDarkMode() {
+      const body = document.body;
+      body.classList.toggle("dark");
+      const icon = document.getElementById("themeIcon");
+      if (body.classList.contains("dark")) {
+        icon.setAttribute("data-lucide", "sun");
+      } else {
+        icon.setAttribute("data-lucide", "moon");
+      }
+      lucide.createIcons();
+      localStorage.setItem("iso-theme", body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const dayNames = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"];
+      const day = dayNames[now.getDay()];
+      const date = now.toLocaleDateString("fa-IR");
+      const time = now.toLocaleTimeString("fa-IR");
+      document.getElementById("liveDate").textContent = `${day} - ${date} - ${time}`;
+    }
+
+    setInterval(updateDate, 1000);
+    updateDate();
+
+    if (localStorage.getItem("iso-theme") === "dark") {
+      document.body.classList.add("dark");
+    }
+
+    searchInput.addEventListener("input", () => { currentPage = 1; render(); });
+    filterSelect.addEventListener("change", () => { currentPage = 1; render(); });
+
+    lucide.createIcons();
+    render();
+
+        function toggleDashboard() {
+  const panel = document.getElementById("dashboardPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+    function updateDashboard() {
+  document.getElementById("totalCount").textContent = data.length;
+  document.getElementById("favCount").textContent = getFavorites().length;
+  document.getElementById("searchTerm").textContent = document.getElementById("search").value || '---';
+  const filter = document.getElementById("filter").value;
+  document.getElementById("activeFilter").textContent = filter === 'all' ? 'همه' : filter;
+  document.getElementById("currentPageInfo").textContent = currentPage;
+  
+}
+  updateDashboard();
+}
+
+function downloadPDF() {
+  const search = searchInput.value.toLowerCase();
+  const filter = filterSelect.value;
+  const favorites = getFavorites();
+
+  const filtered = data.filter(item => {
+    const matchesSearch = item.code.toLowerCase().includes(search) || item.desc.includes(search);
+    const matchesFilter = filter === "all" || item.category === filter;
+    const isFavorite = !showFavoritesOnly || favorites.includes(item.code);
+    return matchesSearch && matchesFilter && isFavorite;
+  });
+
+  // ساخت یک container موقت برای PDF
+  const tempDiv = document.createElement("div");
+  tempDiv.style.direction = "rtl";
+  tempDiv.style.fontFamily = "'Vazir', sans-serif";
+
+  filtered.forEach(item => {
+    const div = document.createElement("div");
+    div.style.border = "1px solid #ccc";
+    div.style.margin = "10px 0";
+    div.style.padding = "10px";
+    div.innerHTML = `
+      <strong>${item.code}</strong><br>
+      ${item.desc}<br>
+      ${item.details}<br>
+      <a href="${item.link}">${item.link}</a>
+    `;
+    tempDiv.appendChild(div);
+  });
+
+  const opt = {
+    margin: 0.5,
+    filename: 'iso-standards.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(tempDiv).save();
+}
+
+// Upload System 
+document.getElementById("uploadTxt").addEventListener("change", handleFileUpload);
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const content = e.target.result;
+    const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+    const matched = [];
+    const unmatched = [];
+
+    lines.forEach(codeLine => {
+      const found = data.find(item => item.code.toLowerCase() === codeLine.toLowerCase());
+      if (found) {
+        matched.push(found);
+      } else {
+        unmatched.push(codeLine);
+      }
+    });
+
+    displayMatchResults(matched, unmatched);
+  };
+  reader.readAsText(file);
+}
+
+function displayMatchResults(matched, unmatched) {
+  const resultDiv = document.createElement("div");
+  resultDiv.id = "matchResult";
+
+  let html = `<h3>📄 نتیجه تطبیق فایل بارگذاری‌شده</h3>`;
+
+  if (matched.length) {
+    html += `<h4>✅ استانداردهای موجود:</h4><ul>`;
+    matched.forEach(item => {
+      html += `<li><strong>${item.code}</strong> – <a href="${item.link}" target="_blank">مشاهده در سایت</a></li>`;
+    });
+    html += `</ul>`;
+  }
+
+  if (unmatched.length) {
+    html += `<h4>❌ استانداردهای یافت‌نشده:</h4><ul>`;
+    unmatched.forEach(code => {
+      html += `<li>${code}</li>`;
+    });
+    html += `</ul>`;
+  }
+
+  resultDiv.innerHTML = html;
+
+  const oldResult = document.getElementById("matchResult");
+  if (oldResult) oldResult.remove();
+
+  container.prepend(resultDiv);
+  lucide.createIcons();
+}
+
+  </script>
+</body>
+</html>
