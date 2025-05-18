@@ -15,6 +15,10 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
+* {
+  font-family: 'Vazir', 'sans-serif';
+}
+
 :root {
   --bg: #f4f6f9;
   --text: #222;
@@ -33,7 +37,7 @@ body {
 
 h1 {
   text-align: center;
-  color: var(--primary);
+  color: #1565c0;
 }
 
 .controls {
@@ -71,12 +75,42 @@ input[type="text"] {
   justify-content: center;
   width: 42px;
   height: 42px;
-  transition: background 0.3s, transform 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.icon-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5, #0052ff);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .icon-btn:hover {
-  background: #e0e0e0;
+  background: transparent;
+  border-color: transparent;
   transform: scale(1.05);
+}
+
+.icon-btn:hover::before {
+  opacity: 1;
+}
+
+.icon-btn svg {
+  stroke: #555;
+  transition: stroke 0.3s ease;
+}
+
+.icon-btn:hover svg {
+  stroke: white;
 }
 
 footer {
@@ -521,4 +555,51 @@ footer {
 
 .dark .pagination button:hover:not(.active):not(:disabled) {
   background: #333;
+}
+
+/* استایل‌های پنل ادمین */
+.admin-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-menu li {
+  margin-bottom: 10px;
+}
+
+.admin-menu button {
+  width: 100%;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+}
+
+.admin-menu button i {
+  margin-left: 8px;
+}
+
+/* استایل‌های بخش مدیریت استانداردها */
+.standard-item {
+  background: var(--card-bg);
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.standard-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.standard-item button {
+  padding: 6px 12px;
+  font-size: 0.9em;
+}
+
+.standard-item button i {
+  margin-left: 5px;
 }

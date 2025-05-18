@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <title>سامانه مرجع استاندارد ها</title>
   <script src="data.js"></script>
+  
   <link href="style.css" rel="stylesheet" />
   <!-- <link href="https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css" rel="stylesheet">; -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -16,7 +17,7 @@
 </head>
 
 <body>
-  <h1>سامانه مرجع استاندارد ها</h1>
+  <h1 id="main_text">سامانه مرجع استاندارد ها</h1>
 
   <footer>
     <div>BNP Developer Group</div>
@@ -55,6 +56,10 @@
     <!-- آیکون ستاره جدید -->
     <button class="icon-btn" onclick="toggleFavorites()" title="نمایش علاقه‌مندی‌ها">
       <i id="favoritesIcon" data-lucide="star"></i>
+    </button>
+    <!-- سایر کنترل ها ... -->
+    <button class="icon-btn" onclick="openAdminPanel()" title="پنل ادمین">
+      <i data-lucide="shield"></i>
     </button>
   </div>
 
@@ -137,7 +142,88 @@
       </div>
     </div>
   </div>
+  <!-- پنل ادمین -->
+  <div class="overlay" id="adminOverlay"></div>
+  <div class="project-panel" id="adminPanel">
+    <div class="project-panel-header">
+      <h3 class="project-panel-title" id="adminPanelTitle">پنل مدیریت ادمین</h3>
+      <button class="close-panel" onclick="closeAdminPanel()">&times;</button>
+    </div>
 
+    <div id="adminLoginContainer">
+      <div class="form-group">
+        <label for="adminPassword">رمز عبور ادمین</label>
+        <input type="password" id="adminPassword" class="form-control" placeholder="رمز عبور را وارد کنید">
+      </div>
+      <button class="btn btn-primary" onclick="adminLogin()">ورود</button>
+    </div>
+
+    <div id="adminMenuContainer" style="display: none;">
+      <ul class="admin-menu">
+        <li>
+          <button class="btn btn-primary" onclick="showAdminSection('manageStandards')">
+            <i data-lucide="file-text"></i> مدیریت استانداردها
+          </button>
+        </li>
+        <li>
+          <button class="btn btn-danger" onclick="adminLogout()">
+            <i data-lucide="log-out"></i> خروج از سیستم
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div id="manageStandardsContainer" style="display: none;">
+      <h4>مدیریت استانداردها</h4>
+
+      <div class="form-group">
+        <input type="text" id="adminStandardSearch" class="form-control" placeholder="جستجوی استانداردها...">
+        <button class="btn btn-primary" onclick="searchAdminStandards()" style="margin-top: 10px;">جستجو</button>
+      </div>
+
+      <div id="adminStandardsList" style="margin-top: 20px;">
+        <!-- لیست استانداردها اینجا نمایش داده می‌شود -->
+      </div>
+
+      <div id="editStandardContainer" style="display: none; margin-top: 20px;">
+        <h5>ویرایش استاندارد</h5>
+        <div class="form-group">
+          <label for="editCode">کد استاندارد</label>
+          <input type="text" id="editCode" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="editDesc">نام استاندارد</label>
+          <input type="text" id="editDesc" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="editCategory">دسته بندی</label>
+          <select id="editCategory" class="form-control">
+            <option value="quality">کیفیت</option>
+            <option value="safety">ایمنی</option>
+            <option value="environment">محیط زیست</option>
+            <option value="food">ایمنی غذایی</option>
+            <option value="security">امنیت اطلاعات</option>
+            <option value="cables">کابل</option>
+            <option value="cable_tray">سینی کابل</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editDetails">توضیحات</label>
+          <textarea id="editDetails" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editLink">لینک</label>
+          <input type="text" id="editLink" class="form-control">
+        </div>
+        <button class="btn btn-primary" onclick="saveEditedStandard()">ذخیره تغییرات</button>
+        <button class="btn btn-secondary" onclick="cancelEditStandard()">انصراف</button>
+      </div>
+
+      <button class="btn btn-secondary" onclick="showAdminSection('mainMenu')" style="margin-top: 20px;">
+        بازگشت به منوی اصلی
+      </button>
+    </div>
+  </div>
   <script>
     const itemsPerPage = 15;
     let currentPage = 1;
@@ -983,6 +1069,303 @@
           render();
         };
         pagination.appendChild(nextBtn);
+      }
+    }
+    // پسورد ادمین (هش SHA-256 رمز "admin")
+    const ADMIN_PASSWORD_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+    let isAdminLoggedIn = false;
+
+    // توابع مدیریت پنل ادمین
+    function openAdminPanel() {
+      document.getElementById('adminPanel').classList.add('open');
+      document.getElementById('adminOverlay').classList.add('active');
+
+      if (!checkAdminLogin()) {
+        resetAdminPanel();
+      }
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('adminPanel').classList.remove('open');
+      document.getElementById('adminOverlay').classList.remove('active');
+    }
+
+    function resetAdminPanel() {
+      isAdminLoggedIn = false;
+      const adminLoginContainer = document.getElementById('adminLoginContainer');
+      const adminMenuContainer = document.getElementById('adminMenuContainer');
+      const manageStandardsContainer = document.getElementById('manageStandardsContainer');
+
+      if (adminLoginContainer) adminLoginContainer.style.display = 'block';
+      if (adminMenuContainer) adminMenuContainer.style.display = 'none';
+      if (manageStandardsContainer) manageStandardsContainer.style.display = 'none';
+
+      const adminPanelTitle = document.getElementById('adminPanelTitle');
+      if (adminPanelTitle) adminPanelTitle.textContent = 'پنل مدیریت ادمین';
+
+      const adminPassword = document.getElementById('adminPassword');
+      if (adminPassword) adminPassword.value = '';
+
+      // ریست آیکون
+      const adminBtn = document.querySelector('.icon-btn[onclick="openAdminPanel()"] i');
+      if (adminBtn) {
+        adminBtn.setAttribute('data-lucide', 'shield');
+        lucide.createIcons();
+      }
+    }
+
+    async function adminLogin() {
+      const passwordInput = document.getElementById('adminPassword');
+      if (!passwordInput) {
+        console.error('عنصر رمز عبور یافت نشد');
+        return;
+      }
+
+      const password = passwordInput.value;
+
+      try {
+        const hash = await sha256(password);
+
+        if (hash === ADMIN_PASSWORD_HASH) {
+          // ایجاد یک توکن تصادفی برای session
+          const sessionToken = generateSessionToken();
+          const tokenHash = await sha256(sessionToken + ADMIN_PASSWORD_HASH);
+
+          // ذخیره توکن در localStorage
+          localStorage.setItem('adminAuthToken', tokenHash);
+          localStorage.setItem('adminSessionToken', sessionToken);
+          // ذخیره زمان انقضا (1 ساعت)
+          localStorage.setItem('adminAuthExpire', Date.now() + 3600000);
+
+          // به روز رسانی UI
+          isAdminLoggedIn = true;
+
+          const adminLoginContainer = document.getElementById('adminLoginContainer');
+          const adminMenuContainer = document.getElementById('adminMenuContainer');
+          const adminPanelTitle = document.getElementById('adminPanelTitle');
+
+          if (adminLoginContainer) adminLoginContainer.style.display = 'none';
+          if (adminMenuContainer) adminMenuContainer.style.display = 'block';
+          if (adminPanelTitle) adminPanelTitle.textContent = 'پنل مدیریت ادمین - سیستم';
+
+          showAdminSection('mainMenu');
+
+          // آپدیت آیکون
+          const adminBtn = document.querySelector('.icon-btn[onclick="openAdminPanel()"] i');
+          if (adminBtn) {
+            adminBtn.setAttribute('data-lucide', 'shield-check');
+            lucide.createIcons();
+          }
+        } else {
+          alert('رمز عبور اشتباه است!');
+        }
+      } catch (error) {
+        console.error('خطا در پردازش رمز عبور:', error);
+        alert('خطایی در سیستم احراز هویت رخ داده است');
+      }
+    }
+
+    function generateSessionToken() {
+      const array = new Uint32Array(10);
+      window.crypto.getRandomValues(array);
+      return Array.from(array, dec => ('0' + dec.toString(16)).substr(-2)).join('');
+    }
+
+    async function checkAdminLogin() {
+      const token = localStorage.getItem('adminAuthToken');
+      const expire = localStorage.getItem('adminAuthExpire');
+      const sessionToken = localStorage.getItem('adminSessionToken');
+
+      if (!token || !expire || !sessionToken || Date.now() > parseInt(expire)) {
+        resetAdminPanel();
+        return false;
+      }
+
+      try {
+        const validToken = await sha256(sessionToken + ADMIN_PASSWORD_HASH);
+
+        if (token === validToken) {
+          isAdminLoggedIn = true;
+
+          const adminLoginContainer = document.getElementById('adminLoginContainer');
+          const adminMenuContainer = document.getElementById('adminMenuContainer');
+          const adminPanelTitle = document.getElementById('adminPanelTitle');
+
+          if (adminLoginContainer) adminLoginContainer.style.display = 'none';
+          if (adminMenuContainer) adminMenuContainer.style.display = 'block';
+          if (adminPanelTitle) adminPanelTitle.textContent = 'پنل مدیریت ادمین - سیستم';
+
+          showAdminSection('mainMenu');
+
+          // آپدیت آیکون
+          const adminBtn = document.querySelector('.icon-btn[onclick="openAdminPanel()"] i');
+          if (adminBtn) {
+            adminBtn.setAttribute('data-lucide', 'shield-check');
+            lucide.createIcons();
+          }
+
+          return true;
+        }
+      } catch (error) {
+        console.error('خطا در بررسی اعتبار ورود:', error);
+      }
+
+      resetAdminPanel();
+      return false;
+    }
+
+    function adminLogout() {
+      localStorage.removeItem('adminAuthToken');
+      localStorage.removeItem('adminAuthExpire');
+      localStorage.removeItem('adminSessionToken');
+      resetAdminPanel();
+    }
+
+    function showAdminSection(section) {
+      document.getElementById('adminMenuContainer').style.display = 'none';
+      document.getElementById('manageStandardsContainer').style.display = 'none';
+
+      if (section === 'mainMenu') {
+        document.getElementById('adminMenuContainer').style.display = 'block';
+      } else if (section === 'manageStandards') {
+        document.getElementById('manageStandardsContainer').style.display = 'block';
+        // اینجا می‌توانید محتوای مدیریت استانداردها را بارگذاری کنید
+      }
+    }
+
+    // تابع محاسبه هش SHA-256
+    async function sha256(message) {
+      // encode as UTF-8
+      const msgBuffer = new TextEncoder().encode(message);
+
+      // hash the message
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+
+      // convert ArrayBuffer to Array
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+      // convert bytes to hex string
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    }
+    // متغیر برای ذخیره استاندارد در حال ویرایش
+    let editingStandard = null;
+
+    function searchAdminStandards() {
+      const searchTerm = document.getElementById('adminStandardSearch').value.trim().toLowerCase();
+      const standardsList = document.getElementById('adminStandardsList');
+      standardsList.innerHTML = '';
+
+      if (!searchTerm) {
+        standardsList.innerHTML = '<p>لطفاً عبارت جستجو را وارد کنید</p>';
+        return;
+      }
+
+      const results = data.filter(item =>
+        item.code.toLowerCase().includes(searchTerm) ||
+        item.desc.toLowerCase().includes(searchTerm)
+      );
+
+      if (results.length === 0) {
+        standardsList.innerHTML = '<p>هیچ استانداردی یافت نشد</p>';
+        return;
+      }
+
+      results.forEach(item => {
+        const standardItem = document.createElement('div');
+        standardItem.className = 'standard-item';
+        standardItem.style.padding = '10px';
+        standardItem.style.borderBottom = '1px solid #eee';
+        standardItem.style.display = 'flex';
+        standardItem.style.justifyContent = 'space-between';
+        standardItem.style.alignItems = 'center';
+
+        standardItem.innerHTML = `
+      <div>
+        <strong>${item.code}</strong> - ${item.desc}
+        <div style="font-size: 0.8em; color: #666;">${item.category}</div>
+      </div>
+      <div>
+        <button class="btn btn-primary" onclick="editStandard('${item.code}')" style="margin-left: 5px;">
+          <i data-lucide="edit"></i> ویرایش
+        </button>
+        <button class="btn btn-danger" onclick="deleteStandard('${item.code}')" style="margin-left: 5px;">
+          <i data-lucide="trash-2"></i> حذف
+        </button>
+      </div>
+    `;
+
+        standardsList.appendChild(standardItem);
+      });
+
+      lucide.createIcons();
+    }
+
+    function editStandard(code) {
+      editingStandard = data.find(item => item.code === code);
+      if (!editingStandard) return;
+
+      document.getElementById('editCode').value = editingStandard.code;
+      document.getElementById('editDesc').value = editingStandard.desc;
+      document.getElementById('editCategory').value = editingStandard.category;
+      document.getElementById('editDetails').value = editingStandard.details;
+      document.getElementById('editLink').value = editingStandard.link;
+
+      document.getElementById('adminStandardsList').style.display = 'none';
+      document.getElementById('editStandardContainer').style.display = 'block';
+    }
+
+    function saveEditedStandard() {
+      if (!editingStandard) return;
+
+      const newCode = document.getElementById('editCode').value.trim();
+      const newDesc = document.getElementById('editDesc').value.trim();
+      const newCategory = document.getElementById('editCategory').value;
+      const newDetails = document.getElementById('editDetails').value.trim();
+      const newLink = document.getElementById('editLink').value.trim();
+
+      if (!newCode || !newDesc) {
+        alert('لطفاً کد و نام استاندارد را وارد کنید');
+        return;
+      }
+
+      // اگر کد تغییر کرده باشد، بررسی کنیم که تکراری نباشد
+      if (newCode !== editingStandard.code && data.some(item => item.code === newCode)) {
+        alert('این کد استاندارد قبلاً ثبت شده است');
+        return;
+      }
+
+      // اعمال تغییرات
+      editingStandard.code = newCode;
+      editingStandard.desc = newDesc;
+      editingStandard.category = newCategory;
+      editingStandard.details = newDetails;
+      editingStandard.link = newLink;
+
+      // ذخیره تغییرات در localStorage (اگر از آن استفاده می‌کنید)
+      localStorage.setItem('isoStandards', JSON.stringify(data));
+
+      alert('تغییرات با موفقیت ذخیره شد');
+      cancelEditStandard();
+      searchAdminStandards(); // به روز رسانی لیست
+    }
+
+    function cancelEditStandard() {
+      editingStandard = null;
+      document.getElementById('editStandardContainer').style.display = 'none';
+      document.getElementById('adminStandardsList').style.display = 'block';
+    }
+
+    function deleteStandard(code) {
+      if (!confirm(`آیا از حذف استاندارد ${code} مطمئن هستید؟`)) return;
+
+      const index = data.findIndex(item => item.code === code);
+      if (index !== -1) {
+        data.splice(index, 1);
+        // ذخیره تغییرات در localStorage (اگر از آن استفاده می‌کنید)
+        localStorage.setItem('isoStandards', JSON.stringify(data));
+        alert('استاندارد با موفقیت حذف شد');
+        searchAdminStandards(); // به روز رسانی لیست
       }
     }
   </script>
