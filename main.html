@@ -165,26 +165,41 @@
       return JSON.parse(localStorage.getItem("isoFavorites") || "[]");
     }
 
-    function toggleFavorites() {
-      showFavoritesOnly = !showFavoritesOnly;
-      currentPage = 1;
+    // function toggleFavorites() {
+    //   showFavoritesOnly = !showFavoritesOnly;
+    //   currentPage = 1;
 
-      // تغییر آیکون و استایل
-      const favoritesIcon = document.getElementById("favoritesIcon");
-      const starBtn = document.querySelector('.icon-btn[onclick="toggleFavorites()"]');
+    //   // تغییر آیکون و استایل
+    //   const favoritesIcon = document.getElementById("favoritesIcon");
+    //   const starBtn = document.querySelector('.icon-btn[onclick="toggleFavorites()"]');
 
-      if (showFavoritesOnly) {
-        favoritesIcon.setAttribute("data-lucide", "star");
-        starBtn.classList.add("active-favorite");
+    //   if (showFavoritesOnly) {
+    //     favoritesIcon.setAttribute("data-lucide", "star");
+    //     starBtn.classList.add("active-favorite");
+    //   } else {
+    //     favoritesIcon.setAttribute("data-lucide", "star");
+    //     starBtn.classList.remove("active-favorite");
+    //   }
+
+    //   lucide.createIcons();
+    //   render();
+    // }
+    function toggleFavorite(code) {
+      let favorites = getFavorites();
+      if (favorites.includes(code)) {
+        favorites = favorites.filter(c => c !== code);
       } else {
-        favoritesIcon.setAttribute("data-lucide", "star");
-        starBtn.classList.remove("active-favorite");
+        favorites.push(code);
       }
-
-      lucide.createIcons();
+      localStorage.setItem("isoFavorites", JSON.stringify(favorites));
       render();
     }
 
+    function toggleFavorites() {
+      showFavoritesOnly = !showFavoritesOnly;
+      currentPage = 1;
+      render();
+    }
 
 
     function getStatuses() {
