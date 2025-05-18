@@ -52,11 +52,15 @@
     <button class="icon-btn" onclick="openProjectPanel()" title="مدیریت پروژه‌ها">
       <i data-lucide="folder-plus"></i>
     </button>
+    <!-- آیکون ستاره جدید -->
+    <button class="icon-btn" onclick="toggleFavorites()" title="نمایش علاقه‌مندی‌ها">
+      <i id="favoritesIcon" data-lucide="star"></i>
+    </button>
   </div>
 
-  <div class="favorites-toggle">
+  <!-- <div class="favorites-toggle">
     <button onclick="toggleFavorites()">نمایش علاقه‌ مندی‌ ها</button>
-  </div>
+  </div> -->
 
   <div id="container"></div>
   <div class="pagination" id="pagination"></div>
@@ -161,22 +165,27 @@
       return JSON.parse(localStorage.getItem("isoFavorites") || "[]");
     }
 
-    function toggleFavorite(code) {
-      let favorites = getFavorites();
-      if (favorites.includes(code)) {
-        favorites = favorites.filter(c => c !== code);
-      } else {
-        favorites.push(code);
-      }
-      localStorage.setItem("isoFavorites", JSON.stringify(favorites));
-      render();
-    }
-
     function toggleFavorites() {
       showFavoritesOnly = !showFavoritesOnly;
       currentPage = 1;
+
+      // تغییر آیکون و استایل
+      const favoritesIcon = document.getElementById("favoritesIcon");
+      const starBtn = document.querySelector('.icon-btn[onclick="toggleFavorites()"]');
+
+      if (showFavoritesOnly) {
+        favoritesIcon.setAttribute("data-lucide", "star");
+        starBtn.classList.add("active-favorite");
+      } else {
+        favoritesIcon.setAttribute("data-lucide", "star");
+        starBtn.classList.remove("active-favorite");
+      }
+
+      lucide.createIcons();
       render();
     }
+
+
 
     function getStatuses() {
       return JSON.parse(localStorage.getItem("isoStatuses") || "{}");
