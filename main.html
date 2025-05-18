@@ -921,6 +921,70 @@
 
       html2pdf().set(opt).from(tempDiv).save();
     }
+    function renderPagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      pagination.innerHTML = "";
+
+      // تعیین محدوده صفحات قابل نمایش
+      const maxVisiblePages = 5; // تعداد صفحاتی که در هر لحظه نمایش داده می‌شود
+      let startPage, endPage;
+
+      if (totalPages <= maxVisiblePages) {
+        // اگر صفحات کمتر از حداکثر صفحات قابل نمایش باشند
+        startPage = 1;
+        endPage = totalPages;
+      } else {
+        // محاسبه صفحات قابل نمایش بر اساس صفحه فعلی
+        const half = Math.floor(maxVisiblePages / 2);
+        if (currentPage <= half + 1) {
+          startPage = 1;
+          endPage = maxVisiblePages;
+        } else if (currentPage >= totalPages - half) {
+          startPage = totalPages - maxVisiblePages + 1;
+          endPage = totalPages;
+        } else {
+          startPage = currentPage - half;
+          endPage = currentPage + half;
+        }
+      }
+
+      // ایجاد دکمه Previous اگر لازم باشد
+      if (currentPage > 1) {
+        const prevBtn = document.createElement("button");
+        prevBtn.innerHTML = "&laquo; قبلی";
+        prevBtn.onclick = () => {
+          currentPage--;
+          render();
+        };
+        pagination.appendChild(prevBtn);
+      }
+
+      // ایجاد دکمه‌های شماره صفحات
+      for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        if (i === currentPage) {
+          btn.classList.add("active");
+          btn.disabled = true;
+        }
+        btn.onclick = () => {
+          currentPage = i;
+          render();
+        };
+        pagination.appendChild(btn);
+      }
+
+      // ایجاد دکمه Next اگر لازم باشد
+      if (currentPage < totalPages) {
+        const nextBtn = document.createElement("button");
+        nextBtn.innerHTML = "بعدی &raquo;";
+        nextBtn.onclick = () => {
+          currentPage++;
+          render();
+        };
+        pagination.appendChild(nextBtn);
+      }
+    }
   </script>
 </body>
 
