@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود / ثبت نام - سامانه مرجع استانداردها</title>
+    <link href="../static/style.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #1565c0;
+            --primary-light: #5e92f3;
+            --primary-dark: #003c8f;
+            --error: #d32f2f;
+            --success: #388e3c;
+            --text: #333;
+            --text-light: #666;
+            --bg: #f5f5f5;
+            --card-bg: #fff;
+            --border: #ddd;
+        }
+
+        body.dark {
+            --primary: #1976d2;
+            --primary-light: #63a4ff;
+            --primary-dark: #004ba0;
+            --error: #f44336;
+            --success: #4caf50;
+            --text: #f1f1f1;
+            --text-light: #aaa;
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --border: #444;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Vazir', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .auth-container {
+            max-width: 500px;
+            width: 90%;
+            margin: 50px auto;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-light);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            padding: 30px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--card-bg);
+            color: var(--text);
+            transition: border 0.3s;
+            font-family: 'Vazir', sans-serif;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Vazir', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(21, 101, 192, 0.1);
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-danger {
+            background: rgba(211, 47, 47, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(211, 47, 47, 0.3);
+        }
+
+        .alert-success {
+            background: rgba(56, 142, 60, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(56, 142, 60, 0.3);
+        }
+
+        .alert i {
+            margin-left: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+            font-size: 14px;
+            margin-top: auto;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle input {
+            padding-right: 40px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" onclick="toggleDarkMode()">
+        <i id="themeIcon" data-lucide="moon"></i>
+    </div>
+
+    <div class="auth-container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">ورود</div>
+            <div class="tab" onclick="switchTab('signup')">ثبت نام</div>
+        </div>
+
+        <div class="tab-content active" id="login-tab">
+            <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">ورود به حساب کاربری</h2>
+
+            <div id="login-error" class="alert alert-danger" style="display: none;">
+                <i data-lucide="alert-circle"></i>
+                <span id="login-error-message"></span>
+            </div>
+
+            <div id="login-success" class="alert alert-success" style="display: none;">
+                <i data-lucide="check-circle"></i>
+                <span id="login-success-message"></span>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">نام کاربری</label>
+                    <input type="text" id="login-username" class="form-control" required>
+                </div>
+
+                <div class="form-group password-toggle">
+                    <label for="login-password">رمز عبور</label>
+                    <input type="password" id="login-password" class="form-control" required>
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password')">
+                        <i data-lucide="eye"></i>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    <span id="login-btn-text">ورود</span>
+                    <span id="login-btn-spinner" style="display: none;">
+                        <i data-lucide="loader" class="animate-spin"></i>
+                    </span>
+                </button>
+            </form>
+        </div>
+
+        <div class="tab-content" id="signup-tab">
+            <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">ثبت نام در سامانه</h2>
+
+            <div id="signup-error" class="alert alert-danger" style="display: none;">
+                <i data-lucide="alert-circle"></i>
+                <span id="signup-error-message"></span>
+            </div>
+
+            <div id="signup-success" class="alert alert-success" style="display: none;">
+                <i data-lucide="check-circle"></i>
+                <span id="signup-success-message"></span>
+            </div>
+
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="signup-username">نام کاربری</label>
+                    <input type="text" id="signup-username" class="form-control" required>
+                    <small style="color: var(--text-light); font-size: 12px;">حداقل ۳ و حداکثر ۳۲ کاراکتر (فقط حروف، اعداد و زیرخط)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-fullname">نام کامل</label>
+                    <input type="text" id="signup-fullname" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-email">ایمیل</label>
+                    <input type="email" id="signup-email" class="form-control" required>
+                </div>
+
+                <div class="form-group password-toggle">
+                    <label for="signup-password">رمز عبور</label>
+                    <input type="password" id="signup-password" class="form-control" required>
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signup-password')">
+                        <i data-lucide="eye"></i>
+                    </button>
+                    <small style="color: var(--text-light); font-size: 12px;">
+                        حداقل ۸ کاراکتر، شامل حروف بزرگ و کوچک و اعداد
+                    </small>
+                </div>
+
+                <div class="form-group password-toggle">
+                    <label for="signup-confirm-password">تکرار رمز عبور</label>
+                    <input type="password" id="signup-confirm-password" class="form-control" required>
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signup-confirm-password')">
+                        <i data-lucide="eye"></i>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="signup-btn">
+                    <span id="signup-btn-text">ثبت نام</span>
+                    <span id="signup-btn-spinner" style="display: none;">
+                        <i data-lucide="loader" class="animate-spin"></i>
+                    </span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="footer">
+        سامانه مرجع استانداردها - نسخه 1.0
+    </div>
+
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+
+        // Check dark mode preference
+        if (localStorage.getItem('iso-theme') === 'dark') {
+            document.body.classList.add('dark');
+            document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+            lucide.createIcons();
+        }
+
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+            const icon = document.getElementById('themeIcon');
+            if (document.body.classList.contains('dark')) {
+                icon.setAttribute('data-lucide', 'sun');
+                localStorage.setItem('iso-theme', 'dark');
+            } else {
+                icon.setAttribute('data-lucide', 'moon');
+                localStorage.setItem('iso-theme', 'light');
+            }
+            lucide.createIcons();
+        }
+
+        // Switch between login and signup tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+
+            // Clear all messages when switching tabs
+            hideAllMessages();
+        }
+
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const btn = input.nextElementSibling;
+            const icon = btn.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // Hide all alert messages
+        function hideAllMessages() {
+            document.querySelectorAll('.alert').forEach(a => a.style.display = 'none');
+        }
+
+        // Show error message
+        function showError(tab, message) {
+            hideAllMessages();
+            const errorEl = document.getElementById(`${tab}-error`);
+            const messageEl = document.getElementById(`${tab}-error-message`);
+
+            messageEl.textContent = message;
+            errorEl.style.display = 'flex';
+
+            // Scroll to error
+            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Show success message
+        function showSuccess(tab, message) {
+            hideAllMessages();
+            const successEl = document.getElementById(`${tab}-success`);
+            const messageEl = document.getElementById(`${tab}-success-message`);
+
+            messageEl.textContent = message;
+            successEl.style.display = 'flex';
+        }
+
+        // Toggle loading state
+        function toggleLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            const text = document.getElementById(`${btnId}-text`);
+            const spinner = document.getElementById(`${btnId}-spinner`);
+
+            if (isLoading) {
+                text.style.display = 'none';
+                spinner.style.display = 'inline-block';
+                btn.disabled = true;
+            } else {
+                text.style.display = 'inline-block';
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!username || !password) {
+                showError('login', 'لطفاً نام کاربری و رمز عبور را وارد کنید');
+                return;
+            }
+
+            toggleLoading('login-btn', true);
+
+            try {
+                const response = await fetch('/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('login', 'ورود با موفقیت انجام شد. در حال انتقال...');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showError('login', data.message || 'نام کاربری یا رمز عبور اشتباه است');
+                }
+            } catch (error) {
+                showError('login', 'خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید');
+                console.error('Login error:', error);
+            } finally {
+                toggleLoading('login-btn', false);
+            }
+        });
+
+        // Handle signup form submission
+        document.getElementById('signup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('signup-username').value.trim();
+            const fullName = document.getElementById('signup-fullname').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            // Basic validation
+            if (!username || !fullName || !email || !password || !confirmPassword) {
+                showError('signup', 'لطفاً تمام فیلدهای ضروری را پر کنید');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('signup', 'رمز عبور و تکرار آن مطابقت ندارند');
+                return;
+            }
+
+            if (password.length < 8) {
+                showError('signup', 'رمز عبور باید حداقل ۸ کاراکتر باشد');
+                return;
+            }
+
+            if (!/[A-Z]/.test(password)) {
+                showError('signup', 'رمز عبور باید حداقل یک حرف بزرگ داشته باشد');
+                return;
+            }
+
+            if (!/[a-z]/.test(password)) {
+                showError('signup', 'رمز عبور باید حداقل یک حرف کوچک داشته باشد');
+                return;
+            }
+
+            if (!/[0-9]/.test(password)) {
+                showError('signup', 'رمز عبور باید حداقل یک عدد داشته باشد');
+                return;
+            }
+
+            toggleLoading('signup-btn', true);
+
+            try {
+                const response = await fetch('/sign_up/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        full_name: fullName,
+                        email: email
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('signup', 'ثبت نام با موفقیت انجام شد. در حال انتقال...');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showError('signup', data.message || 'خطا در ثبت نام. لطفاً دوباره تلاش کنید');
+                }
+            } catch (error) {
+                showError('signup', 'خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید');
+                console.error('Signup error:', error);
+            } finally {
+                toggleLoading('signup-btn', false);
+            }
+        });
+    </script>
+</body>
+</html>
