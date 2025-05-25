@@ -1,12 +1,21 @@
 from pydantic_settings import BaseSettings
+from pydantic import PostgresDsn
 
 
 class Settings(BaseSettings):
-    MONGO_URI: str = "mongodb://localhost:27017"
-    DB_NAME: str = "iso"
-    SECRET_KEY: str = "your-secret-key-here"  # Change this in production
-    COOKIE_EXPIRE_TIME: int = 86400  # 1 day in seconds
-    SECURE_COOKIES: bool = True  # Should be True in production
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "1234"
+    POSTGRES_DB: str = "iso"
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+
+    @property
+    def DATABASE_URL(self):
+        return 'postgresql://postgres:1234@localhost:5432/iso'
+
+    SECRET_KEY: str = "your-secret-key-here"
+    COOKIE_EXPIRE_TIME: int = 86400
+    SECURE_COOKIES: bool = True
     ALLOWED_ORIGINS: list = [
         "http://localhost",
         "http://localhost:8000",

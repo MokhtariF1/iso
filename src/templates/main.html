@@ -4,33 +4,116 @@
 <head>
     <meta charset="UTF-8">
     <title>سامانه مرجع استاندارد ها</title>
-    <script src="../static/data.js"></script>
+    <script>
+        let data = []; // This will hold our standards data
+        let isInitialized = false;
+
+        async function initializeApp() {
+            if (isInitialized) return;
+            isInitialized = true;
+
+            try {
+                // Check authentication
+                const authResponse = await fetch('/api/user/profile', {
+                    credentials: 'include'
+                });
+
+                if (!authResponse.ok) {
+                    window.location.href = '/login/';
+                    return;
+                }
+
+                // Load standards data
+                await loadStandards();
+
+                // Initialize the rest of your app
+                initApp();
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = '/login/';
+            }
+        }
+
+        async function loadStandards() {
+            try {
+                const response = await fetch('/api/standards/', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load standards');
+                }
+
+                data = await response.json();
+
+                // Load categories for filter dropdown
+                await loadCategories();
+            } catch (error) {
+                console.error('Error loading standards:', error);
+                // Fallback to empty data if API fails
+                data = [];
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories/', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load categories');
+                }
+
+                const categories = await response.json();
+                const filterSelect = document.getElementById('filter');
+
+                // Clear existing options except the first one
+                while (filterSelect.options.length > 1) {
+                    filterSelect.remove(1);
+                }
+
+                // Add new categories
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    filterSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        function initApp() {
+            // Initialize theme
+            if (localStorage.getItem("iso-theme") === "dark") {
+                document.body.classList.add("dark");
+            }
+
+            // Initialize date display
+            updateDate();
+            setInterval(updateDate, 1000);
+
+            // Initialize icons
+            lucide.createIcons();
+
+            // Initial render
+            render();
+        }
+
+        // Modified to prevent multiple initializations
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+
+        // Rest of your existing JavaScript functions...
+    </script>
 
     <link href="../static/style.css" rel="stylesheet"/>
     <!-- <link href="https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css" rel="stylesheet">; -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js">
-    </script>
-    <style>
-
-    </style>
-    <script>
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const response = await fetch('/api/user/profile', {
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    window.location.href = '/login/';
-                }
-            } catch (error) {
-                window.location.href = '/login/';
-            }
-
-            // Rest of your existing initialization code...
-        });
     </script>
 </head>
 
@@ -46,14 +129,8 @@
 <div class="controls">
     <input type="text" id="search" placeholder="جستجوی استاندارد ...">
     <select id="filter">
-        <option value="all">......</option>
-        <option value="quality">کیفیت</option>
-        <option value="safety">ایمنی</option>
-        <option value="environment">محیط زیست</option>
-        <option value="food">ایمنی غذایی</option>
-        <option value="security">امنیت اطلاعات</option>
-        <option value="cables">کابل</option>
-        <option value="cable_tray">سینی کابل</option>
+        <option value="all">همه</option>
+        <!-- Categories will be loaded dynamically -->
     </select>
     <button class="icon-btn" onclick="toggleDarkMode()" title="حالت تیره/روشن">
         <i id="themeIcon" data-lucide="moon"></i>
@@ -198,7 +275,49 @@
     </div>
 
     <div id="manageStandardsContainer" style="display: none;">
-        <!-- محتوای مدیریت استانداردها -->
+        <h4>مدیریت استانداردها</h4>
+
+        <!-- جستجو و دکمه افزودن -->
+        <div class="admin-controls">
+            <input type="text" id="adminStandardSearch" placeholder="جستجوی استاندارد..." class="form-control">
+            <button class="btn btn-primary" onclick="searchAdminStandards()">جستجو</button>
+            <button class="btn btn-success" onclick="showAddStandardForm()">➕ افزودن استاندارد</button>
+        </div>
+
+        <!-- لیست استانداردها -->
+        <div id="adminStandardsList" class="standards-list" style="margin-top: 20px;"></div>
+
+        <!-- فرم افزودن/ویرایش استاندارد -->
+        <div id="editStandardContainer" style="display: none; margin-top: 20px;">
+            <div class="form-group">
+                <label>کد استاندارد</label>
+                <input type="text" id="editCode" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>عنوان</label>
+                <input type="text" id="editDesc" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>دسته‌بندی</label>
+                <!-- تغییر از input به select -->
+                <select id="editCategory" class="form-control">
+                    <option value="">انتخاب دسته‌بندی</option>
+                    <!-- دسته‌بندی‌ها به صورت داینامیک پر می‌شوند -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label>توضیحات</label>
+                <textarea id="editDetails" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>لینک</label>
+                <input type="text" id="editLink" class="form-control">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="saveEditedStandard()">ذخیره</button>
+                <button class="btn btn-secondary" onclick="cancelEditStandard()">لغو</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1266,6 +1385,7 @@
         if (section === 'mainMenu') {
             document.getElementById('adminMenuContainer').style.display = 'block';
         } else if (section === 'manageStandards') {
+            loadCategoriesForAdmin();
             document.getElementById('manageStandardsContainer').style.display = 'block';
             // اینجا می‌توانید محتوای مدیریت استانداردها را بارگذاری کنید
         }
@@ -1287,137 +1407,139 @@
         return hashHex;
     }
 
-    // متغیر برای ذخیره استاندارد در حال ویرایش
-    let editingStandard = null;
-
-    function searchAdminStandards() {
-        const searchTerm = document.getElementById('adminStandardSearch').value.trim().toLowerCase();
-        const standardsList = document.getElementById('adminStandardsList');
-        standardsList.innerHTML = '';
-
-        if (!searchTerm) {
-            standardsList.innerHTML = '<p>لطفاً عبارت جستجو را وارد کنید</p>';
-            return;
+    let editingStandardId = null; // null به معنی حالت افزودن استاندارد جدید
+    let isEditingMode = false; // حالت ویرایش یا افزودن
+    async function searchAdminStandards() {
+        const searchTerm = document.getElementById('adminStandardSearch').value;
+        try {
+            const response = await fetch(`/api/standards/?search=${encodeURIComponent(searchTerm)}`, {
+                credentials: 'include'
+            });
+            const standards = await response.json();
+            renderAdminStandards(standards);
+        } catch (error) {
+            console.error('Error:', error);
         }
-
-        const results = data.filter(item =>
-            item.code.toLowerCase().includes(searchTerm) ||
-            item.desc.toLowerCase().includes(searchTerm)
-        );
-
-        if (results.length === 0) {
-            standardsList.innerHTML = '<p>هیچ استانداردی یافت نشد</p>';
-            return;
-        }
-
-        results.forEach(item => {
-            const standardItem = document.createElement('div');
-            standardItem.className = 'standard-item';
-            standardItem.style.padding = '10px';
-            standardItem.style.borderBottom = '1px solid #eee';
-            standardItem.style.display = 'flex';
-            standardItem.style.justifyContent = 'space-between';
-            standardItem.style.alignItems = 'center';
-
-            standardItem.innerHTML = `
-      <div>
-        <strong>${item.code}</strong> - ${item.desc}
-        <div style="font-size: 0.8em; color: #666;">${item.category}</div>
-      </div>
-      <div>
-        <button class="btn btn-primary" onclick="editStandard('${item.code}')" style="margin-left: 5px;">
-          <i data-lucide="edit"></i> ویرایش
-        </button>
-        <button class="btn btn-danger" onclick="deleteStandard('${item.code}')" style="margin-left: 5px;">
-          <i data-lucide="trash-2"></i> حذف
-        </button>
-      </div>
-    `;
-
-            standardsList.appendChild(standardItem);
-        });
-
-        lucide.createIcons();
     }
 
-    function editStandard(code) {
-        editingStandard = data.find(item => item.code === code);
-        if (!editingStandard) return;
+    function renderAdminStandards(standards) {
+        const list = document.getElementById('adminStandardsList');
+        list.innerHTML = standards.map(standard => `
+        <div class="standard-item">
+            <div>
+                <strong>${standard.code}</strong> - ${standard.desc}
+                <div class="text-muted">${standard.category}</div>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="editStandard(${standard.id})">ویرایش</button>
+                <button class="btn btn-danger" onclick="deleteStandard(${standard.id})">حذف</button>
+            </div>
+        </div>
+    `).join('');
+    }
 
-        document.getElementById('editCode').value = editingStandard.code;
-        document.getElementById('editDesc').value = editingStandard.desc;
-        document.getElementById('editCategory').value = editingStandard.category;
-        document.getElementById('editDetails').value = editingStandard.details;
-        document.getElementById('editLink').value = editingStandard.link;
+    async function deleteStandard(standardId) {
+        if (!confirm('آیا از حذف این استاندارد مطمئن هستید؟')) return;
+
+        try {
+            const response = await fetch(`/api/standards/${standardId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (response.ok) {
+                await searchAdminStandards();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function editStandard(standardId) {
+        try {
+            const response = await fetch(`/api/standards/${standardId}`, {
+                credentials: 'include'
+            });
+            const standard = await response.json();
+
+            // تنظیم شناسه استاندارد در حال ویرایش
+            editingStandardId = standardId; // <-- این خط اضافه شود
+            isEditingMode = true;
+            // پر کردن فرم ویرایش
+            document.getElementById('editCode').value = standard.code;
+            document.getElementById('editDesc').value = standard.desc;
+            const categorySelect = document.getElementById('editCategory');
+            categorySelect.value = standard.category; // <-- انتخاب خودکار مقدار
+            document.getElementById('editDetails').value = standard.details;
+            document.getElementById('editLink').value = standard.link;
+
+            document.getElementById('adminStandardsList').style.display = 'none';
+            document.getElementById('editStandardContainer').style.display = 'block';
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+
+    function showAddStandardForm() {
+        // ریست فرم و تنظیم حالت افزودن
+        editingStandardId = null;
+        isEditingMode = false;
+
+        document.getElementById('editCode').value = '';
+        document.getElementById('editDesc').value = '';
+        document.getElementById('editCategory').value = '';
+        document.getElementById('editDetails').value = '';
+        document.getElementById('editLink').value = '';
 
         document.getElementById('adminStandardsList').style.display = 'none';
         document.getElementById('editStandardContainer').style.display = 'block';
     }
 
-    function saveEditedStandard() {
-        if (!editingStandard) return;
+    async function saveEditedStandard() {
+        const standardData = {
+            code: document.getElementById('editCode').value,
+            desc: document.getElementById('editDesc').value,
+            category: document.getElementById('editCategory').value,
+            details: document.getElementById('editDetails').value,
+            link: document.getElementById('editLink').value
+        };
 
-        const newCode = document.getElementById('editCode').value.trim();
-        const newDesc = document.getElementById('editDesc').value.trim();
-        const newCategory = document.getElementById('editCategory').value;
-        const newDetails = document.getElementById('editDetails').value.trim();
-        const newLink = document.getElementById('editLink').value.trim();
+        try {
+            let url, method;
 
-        if (!newCode || !newDesc) {
-            alert('لطفاً کد و نام استاندارد را وارد کنید');
-            return;
+            if (isEditingMode) {
+                // حالت ویرایش: PUT
+                url = `/api/standards/${editingStandardId}`;
+                method = 'PUT';
+            } else {
+                // حالت افزودن: POST
+                url = '/api/standards/';
+                method = 'POST';
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(standardData)
+            });
+
+            if (response.ok) {
+                await searchAdminStandards();
+                cancelEditStandard();
+            }
+        } catch (error) {
+            console.error('Error:', error);
         }
-
-        // اگر کد تغییر کرده باشد، بررسی کنیم که تکراری نباشد
-        if (newCode !== editingStandard.code && data.some(item => item.code === newCode)) {
-            alert('این کد استاندارد قبلاً ثبت شده است');
-            return;
-        }
-
-        // اعمال تغییرات
-        editingStandard.code = newCode;
-        editingStandard.desc = newDesc;
-        editingStandard.category = newCategory;
-        editingStandard.details = newDetails;
-        editingStandard.link = newLink;
-
-        // ذخیره تغییرات در localStorage (اگر از آن استفاده می‌کنید)
-        localStorage.setItem('isoStandards', JSON.stringify(data));
-
-        alert('تغییرات با موفقیت ذخیره شد');
-        cancelEditStandard();
-        searchAdminStandards(); // به روز رسانی لیست
     }
 
     function cancelEditStandard() {
-        editingStandard = null;
-        document.getElementById('editStandardContainer').style.display = 'none';
+        editingStandardId = null;
+        isEditingMode = false;
+
         document.getElementById('adminStandardsList').style.display = 'block';
+        document.getElementById('editStandardContainer').style.display = 'none';
     }
-
-    function deleteStandard(code) {
-        if (!confirm(`آیا از حذف استاندارد ${code} مطمئن هستید؟`)) return;
-
-        const index = data.findIndex(item => item.code === code);
-        if (index !== -1) {
-            data.splice(index, 1);
-            // ذخیره تغییرات در localStorage (اگر از آن استفاده می‌کنید)
-            localStorage.setItem('isoStandards', JSON.stringify(data));
-            alert('استاندارد با موفقیت حذف شد');
-            searchAdminStandards(); // به روز رسانی لیست
-        }
-    }
-
-    // function openAdminPanel() {
-    //     document.getElementById('adminPanel').classList.add('open');
-    //     document.getElementById('adminOverlay').classList.add('active');
-    //     // کدهای دیگر...
-    // }
-    //
-    // function closeAdminPanel() {
-    //     document.getElementById('adminPanel').classList.remove('open');
-    //     document.getElementById('adminOverlay').classList.remove('active');
-    // }
 
     function openProfilePanel() {
         document.getElementById('profilePanel').classList.add('open');
@@ -1525,6 +1647,29 @@
         } catch (error) {
             console.error('Error logging out:', error);
             alert('خطا در خروج از حساب');
+        }
+    }
+
+    async function loadCategoriesForAdmin() {
+        try {
+            const response = await fetch('/api/categories/', {
+                credentials: 'include'
+            });
+            const categories = await response.json();
+
+            const categorySelect = document.getElementById('editCategory');
+            // پاکسازی گزینه‌های قبلی
+            categorySelect.innerHTML = '<option value="">انتخاب دسته‌بندی</option>';
+
+            // پر کردن گزینه‌ها
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading categories:', error);
         }
     }
 </script>

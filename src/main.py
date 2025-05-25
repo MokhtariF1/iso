@@ -1,17 +1,25 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, status
 from fastapi.responses import Response, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
-from pymongo import MongoClient
-import secrets
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 from passlib.context import CryptContext
+import secrets
 from datetime import datetime, timedelta
-import models
-from config import settings
-from fastapi import status
 from typing import Dict, Any
+from models import Base, User, AuthCookie, ChangePasswordRequest, UserProfileResponse, LoginInfo, SignUp
+from config import settings
+
+from models import Standard
+from fastapi import Query
+
+# Database setup
+engine = create_engine(settings.DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base.metadata.create_all(bind=engine)
 
 # Security configurations
 security = HTTPBearer()
@@ -19,7 +27,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
 
-# CORS configuration should be more restrictive in production
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -28,20 +36,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
-templates = Jinja2Templates(directory="templates")
-
-
-# Database connection
+# Database dependency
 def get_db():
-    client = MongoClient(settings.MONGO_URI)
+    db = SessionLocal()
     try:
-        db = client[settings.DB_NAME]
         yield db
     finally:
-        client.close()
+        db.close()
+
+
+# Static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 # Security utilities
@@ -57,25 +64,22 @@ def generate_auth_cookie() -> str:
     return secrets.token_urlsafe(32)
 
 
-# Authentication dependencies
-async def get_current_user(request: Request, db=Depends(get_db)):
+# Authentication dependency
+async def get_current_user(request: Request, db: Session = Depends(get_db)):
     auth_key = request.cookies.get("auth_key")
     if not auth_key:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    cookie_collection = db["cookie"]
-    user_cookie = cookie_collection.find_one({"value": auth_key})
-
-    if not user_cookie:
+    cookie = db.query(AuthCookie).filter(AuthCookie.value == auth_key).first()
+    if not cookie:
         raise HTTPException(status_code=401, detail="Invalid authentication cookie")
 
-    if datetime.now() > user_cookie["expire_date"]:
-        cookie_collection.delete_one({"value": auth_key})
+    if datetime.now() > cookie.expire_date:
+        db.delete(cookie)
+        db.commit()
         raise HTTPException(status_code=401, detail="Cookie expired")
 
-    users_collection = db["users"]
-    user = users_collection.find_one({"username": user_cookie["user"]})
-
+    user = db.query(User).filter(User.username == cookie.user_id).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
@@ -83,47 +87,39 @@ async def get_current_user(request: Request, db=Depends(get_db)):
 
 
 @app.post("/sign_up/")
-async def sign_up(info: models.SignUp, request: Request, response: Response, db=Depends(get_db)):
-    # Check if user is already logged in
+async def sign_up(info: SignUp, request: Request, response: Response, db: Session = Depends(get_db)):
     if request.cookies.get("auth_key"):
-        raise HTTPException(status_code=400, detail="Already logged in. Please logout first.")
+        raise HTTPException(status_code=400, detail="Already logged in")
 
-    users_collection = db["users"]
-
-    # Check if username already exists
-    if users_collection.find_one({"username": info.username}):
+    # Check existing user
+    if db.query(User).filter(User.username == info.username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
 
-    # Check if email already exists
-    if users_collection.find_one({"email": info.email}):
+    if db.query(User).filter(User.email == info.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Create new user
+    # Create user
     hashed_password = get_password_hash(info.password)
-    user_data = {
-        "username": info.username,
-        "password": hashed_password,
-        "email": info.email,
-        "full_name": info.full_name,
-        "created_at": datetime.now(),
-        "is_active": True
-    }
+    user = User(
+        username=info.username,
+        password=hashed_password,
+        email=info.email,
+        full_name=info.full_name
+    )
 
-    users_collection.insert_one(user_data)
-
-    # Generate auth cookie
+    # Create cookie
     auth_cookie = generate_auth_cookie()
     expire_time = datetime.now() + timedelta(seconds=settings.COOKIE_EXPIRE_TIME)
+    cookie = AuthCookie(
+        value=auth_cookie,
+        user_id=info.username,
+        expire_date=expire_time
+    )
 
-    cookie_collection = db["cookie"]
-    cookie_collection.insert_one({
-        "value": auth_cookie,
-        "expire_date": expire_time,
-        "user": info.username,
-        "created_at": datetime.now()
-    })
+    db.add(user)
+    db.add(cookie)
+    db.commit()
 
-    # Set secure cookie
     response.set_cookie(
         key="auth_key",
         value=auth_cookie,
@@ -137,33 +133,29 @@ async def sign_up(info: models.SignUp, request: Request, response: Response, db=
 
 
 @app.post("/login/")
-async def login(info: models.LoginInfo, request: Request, response: Response, db=Depends(get_db)):
-    # Check if user is already logged in
+async def login(info: LoginInfo, request: Request, response: Response, db: Session = Depends(get_db)):
     if request.cookies.get("auth_key"):
         raise HTTPException(status_code=400, detail="Already logged in")
 
-    users_collection = db["users"]
-    user = users_collection.find_one({"username": info.username})
-
-    if not user or not verify_password(info.password, user["password"]):
+    user = db.query(User).filter(User.username == info.username).first()
+    if not user or not verify_password(info.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
-    if not user.get("is_active", True):
+    if not user.is_active:
         raise HTTPException(status_code=403, detail="Account is disabled")
 
-    # Generate auth cookie
+    # Create new cookie
     auth_cookie = generate_auth_cookie()
     expire_time = datetime.now() + timedelta(seconds=settings.COOKIE_EXPIRE_TIME)
+    cookie = AuthCookie(
+        value=auth_cookie,
+        user_id=user.username,
+        expire_date=expire_time
+    )
 
-    cookie_collection = db["cookie"]
-    cookie_collection.insert_one({
-        "value": auth_cookie,
-        "expire_date": expire_time,
-        "user": info.username,
-        "created_at": datetime.now()
-    })
+    db.add(cookie)
+    db.commit()
 
-    # Set secure cookie
     response.set_cookie(
         key="auth_key",
         value=auth_cookie,
@@ -180,52 +172,55 @@ async def login(info: models.LoginInfo, request: Request, response: Response, db
 async def login_page(request: Request):
     if request.cookies.get("auth_key"):
         return RedirectResponse("/")
-    else:
-        return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.post("/logout/")
-async def logout(request: Request, response: Response, db=Depends(get_db)):
+async def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     auth_key = request.cookies.get("auth_key")
     if not auth_key:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    cookie_collection = db["cookie"]
-    cookie_collection.delete_one({"value": auth_key})
+    cookie = db.query(AuthCookie).filter(AuthCookie.value == auth_key).first()
+    if cookie:
+        db.delete(cookie)
+        db.commit()
 
     response.delete_cookie("auth_key")
     return {"message": "Logged out successfully"}
 
 
 @app.get("/")
-async def main(request: Request, db=Depends(get_db)):
-    # Check if user is authenticated
+async def main(request: Request, db: Session = Depends(get_db)):
     try:
         current_user = await get_current_user(request, db)
         return templates.TemplateResponse(
-            request=request,
-            name="main.html",
-            context={"user": current_user}
+            "main.html",
+            {"request": request, "user": current_user}
         )
     except HTTPException:
         return RedirectResponse("/login/")
 
 
-@app.get("/api/user/profile", response_model=models.UserProfileResponse)
+@app.get("/api/user/profile", response_model=UserProfileResponse)
 async def get_user_profile(user: Dict[str, Any] = Depends(get_current_user)):
-    return user
+    return JSONResponse(content={
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "created_at": user.created_at.isoformat(),
+        "is_active": user.is_active
+    })
 
 
 @app.post("/api/user/change-password")
 async def change_password(
-        request: models.ChangePasswordRequest,
-        user: Dict[str, Any] = Depends(get_current_user),
-        db=Depends(get_db)
+        request: ChangePasswordRequest,
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
 ):
-    users_collection = db["users"]
-
     # Verify current password
-    if not verify_password(request.current_password, user["password"]):
+    if not verify_password(request.current_password, user.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect"
@@ -239,10 +234,104 @@ async def change_password(
         )
 
     # Update password
-    hashed_password = get_password_hash(request.new_password)
-    users_collection.update_one(
-        {"username": user["username"]},
-        {"$set": {"password": hashed_password}}
-    )
+    user.password = get_password_hash(request.new_password)
+    db.commit()
 
     return {"message": "Password changed successfully"}
+
+
+@app.get("/api/standards/")
+async def get_standards(
+        search: str = Query(None, description="Search term"),
+        category: str = Query(None, description="Filter by category"),
+        db: Session = Depends(get_db)
+):
+    query = db.query(Standard)
+
+    if search:
+        query = query.filter(
+            (Standard.code.ilike(f"%{search}%")) |
+            (Standard.desc.ilike(f"%{search}%"))
+        )
+
+    if category and category != "all":
+        query = query.filter(Standard.category == category)
+
+    standards = query.all()
+    return standards
+
+
+@app.post("/api/standards/")
+async def create_standard(
+        standard_data: dict,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    try:
+        standard = Standard(**standard_data)
+        db.add(standard)
+        db.commit()
+        db.refresh(standard)
+        return standard
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/categories/")
+async def get_categories(db: Session = Depends(get_db)):
+    categories = db.query(Standard.category).distinct().all()
+    return [category[0] for category in categories]
+
+
+@app.delete("/api/standards/{standard_id}")
+async def delete_standard(
+        standard_id: int,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    standard = db.query(Standard).filter(Standard.id == standard_id).first()
+    if not standard:
+        raise HTTPException(status_code=404, detail="Standard not found")
+
+    db.delete(standard)
+    db.commit()
+    return {"message": "Standard deleted successfully"}
+
+
+@app.get("/api/standards/{standard_id}")
+async def get_standard(
+        standard_id: int,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    standard = db.query(Standard).filter(Standard.id == standard_id).first()
+    if not standard:
+        raise HTTPException(status_code=404, detail="Standard not found")
+
+    return standard
+
+
+@app.put("/api/standards/{standard_id}")
+async def update_standard(
+        standard_id: int,
+        standard_data: dict,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    standard = db.query(Standard).filter(Standard.id == standard_id).first()
+    if not standard:
+        raise HTTPException(status_code=404, detail="Standard not found")
+
+    for key, value in standard_data.items():
+        setattr(standard, key, value)
+
+    db.commit()
+    db.refresh(standard)
+    return standard
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
