@@ -323,8 +323,10 @@ async def update_standard(
     if not standard:
         raise HTTPException(status_code=404, detail="Standard not found")
 
+    allowed_fields = ['code', 'desc', 'category', 'details', 'link', 'status']
     for key, value in standard_data.items():
-        setattr(standard, key, value)
+        if key in allowed_fields:
+            setattr(standard, key, value)
 
     db.commit()
     db.refresh(standard)

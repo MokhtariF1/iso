@@ -81,3 +81,4 @@ class Standard(Base):
     link = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     is_active = Column(Boolean, default=True)
+    status = Column(String(20), default='normal')  # افزودن فیلد جدید

@@ -441,11 +441,29 @@
         return JSON.parse(localStorage.getItem("isoStatuses") || "{}");
     }
 
-    function setStatus(code, status) {
-        const statuses = getStatuses();
-        statuses[code] = status;
-        localStorage.setItem("isoStatuses", JSON.stringify(statuses));
-        render();
+    async function setStatus(code, status) {
+        try {
+            // پیدا کردن ID استاندارد بر اساس کد
+            const standard = data.find(item => item.code === code);
+            if (!standard) return;
+
+            const response = await fetch(`/api/standards/${standard.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({status: status})
+            });
+
+            if (response.ok) {
+                // آپدیت داده‌های محلی پس از موفقیت
+                standard.status = status;
+                render();
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
     }
 
     function renderPagination(totalItems) {
@@ -487,32 +505,27 @@
             const status = statuses[item.code];
 
             let statusHTML = "";
-            if (status === "review") {
-                statusHTML = `<div class="status-label status-review">در حال بازبینی</div>`;
-            } else if (status === "expired") {
-                statusHTML = `<div class="status-label status-expired">منقضی‌شده</div>`;
+            switch (item.status) {
+                case 'review':
+                    statusHTML = `<div class="status-label status-review">در حال بازبینی</div>`;
+                    break;
+                case 'expired':
+                    statusHTML = `<div class="status-label status-expired">منقضی‌شده</div>`;
+                    break;
+                case 'normal':
+                default:
+                    statusHTML = `<div class="status-label status-normal">عادی</div>`;
             }
 
             div.innerHTML = `
-          <button class="favorite-btn" onclick="toggleFavorite('${item.code}')">
-            <i data-lucide="${favorites.includes(item.code) ? 'star' : 'star-off'}"></i>
-          </button>
-          ${statusHTML}
-          <div class="title">${item.code}</div>
-          <div class="desc">${item.desc}</div>
-          <div class="details">
-            ${item.details}<br>
-            <a href="${item.link}" target="_blank">مشاهده در سایت</a>
-            <div style="margin-top:10px;">
-              <label style="font-size: 13px;">وضعیت:</label>
-              <select onchange="setStatus('${item.code}', this.value)">
-                <option value="">---</option>
-                <option value="review" ${status === "review" ? "selected" : ""}>در حال بازبینی</option>
-                <option value="expired" ${status === "expired" ? "selected" : ""}>منقضی‌شده</option>
-              </select>
-            </div>
-          </div>
-        `;
+        ${statusHTML}
+        <!-- بقیه محتوا -->
+        <select onchange="setStatus('${item.code}', this.value)" value="${item.status || 'normal'}">
+            <option value="normal">عادی</option>
+            <option value="review">در حال بازبینی</option>
+            <option value="expired">منقضی‌شده</option>
+        </select>
+    `;
 
             div.addEventListener("click", e => {
                 if (!e.target.closest("button") && !e.target.closest("select")) {
