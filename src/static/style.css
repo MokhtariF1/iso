@@ -680,3 +680,27 @@ footer {
     color: #2e7d32;
     border: 1px solid #c8e6c9;
 }
+
+/* وضعیت نمایشی */
+.status-display {
+    color: #666;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.status-text {
+    color: #2196F3;
+    font-weight: 500;
+}
+
+/* انتخابگر وضعیت (فقط برای ادمین) */
+.status-control {
+    display: ${isAdminLoggedIn ? 'block' : 'none'};
+}
+
+.status-select {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 13px;
+}

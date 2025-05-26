@@ -7,6 +7,21 @@
     <script>
         let data = []; // This will hold our standards data
         let isInitialized = false;
+        let isAdminLoggedIn = false;
+
+        async function checkAdminStatus() {
+            try {
+                const response = await fetch('/api/user/profile', {
+                    credentials: 'include'
+                });
+                const userData = await response.json();
+                isAdminLoggedIn = userData.is_admin; // فرض می‌شود سرور فیلد is_admin را برمی‌گرداند
+                return isAdminLoggedIn;
+            } catch (error) {
+                isAdminLoggedIn = false;
+                return false;
+            }
+        }
 
         async function initializeApp() {
             if (isInitialized) return;
@@ -105,6 +120,7 @@
         // Modified to prevent multiple initializations
         document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
+            checkAdminStatus()
         });
 
         // Rest of your existing JavaScript functions...
@@ -253,13 +269,6 @@
         <button class="close-panel" onclick="closeAdminPanel()">&times;</button>
     </div>
 
-    <div id="adminLoginContainer">
-        <div class="form-group">
-            <label for="adminPassword">رمز عبور ادمین</label>
-            <input type="password" id="adminPassword" class="form-control" placeholder="رمز عبور را وارد کنید">
-        </div>
-        <button class="btn btn-primary" onclick="adminLogin()">ورود</button>
-    </div>
 
     <div id="adminMenuContainer" style="display: none;">
         <ul class="admin-menu">
@@ -441,28 +450,26 @@
         return JSON.parse(localStorage.getItem("isoStatuses") || "{}");
     }
 
-    async function setStatus(code, status) {
+    async function setStatus(code, newStatus) {
         try {
-            // پیدا کردن ID استاندارد بر اساس کد
             const standard = data.find(item => item.code === code);
             if (!standard) return;
 
             const response = await fetch(`/api/standards/${standard.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json'},
                 credentials: 'include',
-                body: JSON.stringify({status: status})
+                body: JSON.stringify({status: newStatus})
             });
 
             if (response.ok) {
-                // آپدیت داده‌های محلی پس از موفقیت
-                standard.status = status;
-                render();
+                standard.status = newStatus;
+                render(); // رندر مجدد برای آپدیت UI
             }
         } catch (error) {
-            console.error('Error updating status:', error);
+            console.error('Error:', error);
+            const select = document.querySelector(`select[data-code="${code}"]`);
+            if (select) select.value = standard.status;
         }
     }
 
@@ -501,41 +508,42 @@
             const div = document.createElement("div");
             div.className = "card";
 
-            const statuses = getStatuses();
-            const status = statuses[item.code];
+            // بخش وضعیت (همیشه نمایش داده می‌شود)
+            const item_status = item.status === "normal"?"عادی":item.status === "review"?"درحال بازبینی":"منقضی شده"
+            const statusLabel = `
+            <div class="status-display" style="margin-top:10px;">
+                <span style="font-size: 13px;">وضعیت: </span>
+                <span class="status-text">${item_status}</span>
+            </div>
+        `;
 
-            let statusHTML = "";
-            switch (item.status) {
-                case 'review':
-                    statusHTML = `<div class="status-label status-review">در حال بازبینی</div>`;
-                    break;
-                case 'expired':
-                    statusHTML = `<div class="status-label status-expired">منقضی‌شده</div>`;
-                    break;
-                case 'normal':
-                default:
-                    statusHTML = `<div class="status-label status-normal">عادی</div>`;
-            }
+            // بخش انتخاب وضعیت (فقط برای ادمین)
+            const statusSelector = isAdminLoggedIn ? `
+            <div class="status-control" style="margin-top:10px;">
+                <select
+                    data-code="${item.code}"
+                    onchange="setStatus('${item.code}', this.value)"
+                    class="status-select"
+                >
+                    <option value="normal" ${item.status === 'normal' ? 'selected' : ''}>عادی</option>
+                    <option value="review" ${item.status === 'review' ? 'selected' : ''}>در حال بازبینی</option>
+                    <option value="expired" ${item.status === 'expired' ? 'selected' : ''}>منقضی‌شده</option>
+                </select>
+            </div>
+        ` : '';
 
             div.innerHTML = `
-          <button class="favorite-btn" onclick="toggleFavorite('${item.code}')">
-            <i data-lucide="${favorites.includes(item.code) ? 'star' : 'star-off'}"></i>
-          </button>
-          ${statusHTML}
-          <div class="title">${item.code}</div>
-          <div class="desc">${item.desc}</div>
-          <div class="details">
-            ${item.details}<br>
-            <a href="${item.link}" target="_blank">مشاهده در سایت</a>
-            <div style="margin-top:10px;">
-              <label style="font-size: 13px;">وضعیت:</label>
-        <select onchange="setStatus('${item.code}', this.value)" value="${item.status || 'normal'}">
-            <option value="normal">عادی</option>
-            <option value="review">در حال بازبینی</option>
-            <option value="expired">منقضی‌شده</option>
-        </select>
+            <button class="favorite-btn" onclick="toggleFavorite('${item.code}')">
+                <i data-lucide="${favorites.includes(item.code) ? 'star' : 'star-off'}"></i>
+            </button>
+            <div class="title">${item.code}</div>
+            ${statusLabel}
+            <div class="desc">${item.desc}</div>
+            <div class="details">
+                ${item.details}<br>
+                <a href="${item.link}" target="_blank">مشاهده در سایت</a>
+                ${statusSelector}
             </div>
-          </div>
         `;
 
             div.addEventListener("click", e => {
@@ -1256,16 +1264,21 @@
 
     // پسورد ادمین (هش SHA-256 رمز "admin")
     const ADMIN_PASSWORD_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
-    let isAdminLoggedIn = false;
 
     // توابع مدیریت پنل ادمین
     function openAdminPanel() {
         document.getElementById('adminPanel').classList.add('open');
         document.getElementById('adminOverlay').classList.add('active');
 
-        if (!checkAdminLogin()) {
-            resetAdminPanel();
-        }
+        // بررسی مستقیم وضعیت ادمین
+        checkAdminStatus().then(() => {
+            if (isAdminLoggedIn) {
+                showAdminSection('manageStandards');
+            } else {
+                alert('دسترسی ممنوع!');
+                closeAdminPanel();
+            }
+        });
     }
 
     function closeAdminPanel() {
@@ -1408,14 +1421,25 @@
         document.getElementById('adminMenuContainer').style.display = 'none';
         document.getElementById('manageStandardsContainer').style.display = 'none';
 
-        if (section === 'mainMenu') {
-            document.getElementById('adminMenuContainer').style.display = 'block';
-        } else if (section === 'manageStandards') {
-            loadCategoriesForAdmin();
+        if (section === 'manageStandards') {
             document.getElementById('manageStandardsContainer').style.display = 'block';
-            // اینجا می‌توانید محتوای مدیریت استانداردها را بارگذاری کنید
+            loadCategoriesForAdmin();
+            searchAdminStandards();
         }
+        // اینجا می‌توانید محتوای مدیریت استانداردها را بارگذاری کنید
+
     }
+
+    // function showAdminSection(section) {
+    //     // پنهان کردن تمام بخش‌ها
+    //     document.getElementById('manageStandardsContainer').style.display = 'none';
+    //
+    //     if (section === 'manageStandards') {
+    //         document.getElementById('manageStandardsContainer').style.display = 'block';
+    //         loadCategoriesForAdmin();
+    //         searchAdminStandards();
+    //     }
+    // }
 
     // تابع محاسبه هش SHA-256
     // async function sha256(message) {

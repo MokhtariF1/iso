@@ -209,7 +209,7 @@ async def get_user_profile(user: Dict[str, Any] = Depends(get_current_user)):
         "email": user.email,
         "full_name": user.full_name,
         "created_at": user.created_at.isoformat(),
-        "is_active": user.is_active
+        "is_admin": user.username == "admin"  # یا از سیستم نقش‌ها استفاده کنید
     })
 
 
