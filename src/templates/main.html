@@ -18,10 +18,10 @@
                     credentials: 'include'
                 });
 
-                // if (!authResponse.ok) {
-                //     window.location.href = '/login/';
-                //     return;
-                // }
+                if (!authResponse.ok) {
+                    window.location.href = '/login/';
+                    return;
+                }
 
                 // Load standards data
                 await loadStandards();
@@ -30,7 +30,7 @@
                 initApp();
             } catch (error) {
                 console.error('Error:', error);
-                // window.location.href = '/login/';
+                window.location.href = '/login/';
             }
         }
 
@@ -498,7 +498,12 @@
         const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
         container.innerHTML = "";
         paginatedItems.forEach(item => {
-            // ...
+            const div = document.createElement("div");
+            div.className = "card";
+
+            const statuses = getStatuses();
+            const status = statuses[item.code];
+
             let statusHTML = "";
             switch (item.status) {
                 case 'review':
@@ -520,19 +525,18 @@
             <option value="review">در حال بازبینی</option>
             <option value="expired">منقضی‌شده</option>
         </select>
-    `
-            // ...
+    `;
+
+            div.addEventListener("click", e => {
+                if (!e.target.closest("button") && !e.target.closest("select")) {
+                    div.classList.toggle("open");
+                }
+            });
+            container.appendChild(div);
         });
 
-        div.addEventListener("click", e => {
-            if (!e.target.closest("button") && !e.target.closest("select")) {
-                div.classList.toggle("open");
-            }
-        });
-        container.appendChild(div);
         lucide.createIcons();
     }
-
 
     function toggleDarkMode() {
         const body = document.body;
