@@ -13,8 +13,9 @@
             isInitialized = true;
 
             try {
+                // Check authentication
                 const authResponse = await fetch('/api/user/profile', {
-                    credentials: 'include' // اطمینان از ارسال کوکی‌ها
+                    credentials: 'include'
                 });
 
                 if (!authResponse.ok) {
@@ -22,7 +23,10 @@
                     return;
                 }
 
+                // Load standards data
                 await loadStandards();
+
+                // Initialize the rest of your app
                 initApp();
             } catch (error) {
                 console.error('Error:', error);
