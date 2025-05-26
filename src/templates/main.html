@@ -520,7 +520,7 @@
             <option value="review">در حال بازبینی</option>
             <option value="expired">منقضی‌شده</option>
         </select>
-    `;
+    `
             // ...
         });
 
@@ -530,40 +530,9 @@
             }
         });
         container.appendChild(div);
+        lucide.createIcons();
     }
 
-    )
-    ;
-
-    lucide.createIcons();
-    }
-
-    paginatedItems.forEach(item => {
-        // ...
-        let statusHTML = "";
-        switch (item.status) {
-            case 'review':
-                statusHTML = `<div class="status-label status-review">در حال بازبینی</div>`;
-                break;
-            case 'expired':
-                statusHTML = `<div class="status-label status-expired">منقضی‌شده</div>`;
-                break;
-            case 'normal':
-            default:
-                statusHTML = `<div class="status-label status-normal">عادی</div>`;
-        }
-
-        div.innerHTML = `
-        ${statusHTML}
-        <!-- بقیه محتوا -->
-        <select onchange="setStatus('${item.code}', this.value)" value="${item.status || 'normal'}">
-            <option value="normal">عادی</option>
-            <option value="review">در حال بازبینی</option>
-            <option value="expired">منقضی‌شده</option>
-        </select>
-    `;
-        // ...
-    });
 
     function toggleDarkMode() {
         const body = document.body;
