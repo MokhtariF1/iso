@@ -498,12 +498,7 @@
         const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
         container.innerHTML = "";
         paginatedItems.forEach(item => {
-            const div = document.createElement("div");
-            div.className = "card";
-
-            const statuses = getStatuses();
-            const status = statuses[item.code];
-
+            // ...
             let statusHTML = "";
             switch (item.status) {
                 case 'review':
@@ -526,17 +521,49 @@
             <option value="expired">منقضی‌شده</option>
         </select>
     `;
-
-            div.addEventListener("click", e => {
-                if (!e.target.closest("button") && !e.target.closest("select")) {
-                    div.classList.toggle("open");
-                }
-            });
-            container.appendChild(div);
+            // ...
         });
 
-        lucide.createIcons();
+        div.addEventListener("click", e => {
+            if (!e.target.closest("button") && !e.target.closest("select")) {
+                div.classList.toggle("open");
+            }
+        });
+        container.appendChild(div);
     }
+
+    )
+    ;
+
+    lucide.createIcons();
+    }
+
+    paginatedItems.forEach(item => {
+        // ...
+        let statusHTML = "";
+        switch (item.status) {
+            case 'review':
+                statusHTML = `<div class="status-label status-review">در حال بازبینی</div>`;
+                break;
+            case 'expired':
+                statusHTML = `<div class="status-label status-expired">منقضی‌شده</div>`;
+                break;
+            case 'normal':
+            default:
+                statusHTML = `<div class="status-label status-normal">عادی</div>`;
+        }
+
+        div.innerHTML = `
+        ${statusHTML}
+        <!-- بقیه محتوا -->
+        <select onchange="setStatus('${item.code}', this.value)" value="${item.status || 'normal'}">
+            <option value="normal">عادی</option>
+            <option value="review">در حال بازبینی</option>
+            <option value="expired">منقضی‌شده</option>
+        </select>
+    `;
+        // ...
+    });
 
     function toggleDarkMode() {
         const body = document.body;
