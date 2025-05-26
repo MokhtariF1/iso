@@ -17,9 +17,10 @@ class Settings(BaseSettings):
     COOKIE_EXPIRE_TIME: int = 86400
     SECURE_COOKIES: bool = True
     ALLOWED_ORIGINS: list = [
-        "http://localhost",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000"
+        # "http://localhost",
+        # "http://localhost:8000",
+        # "http://127.0.0.1:8000"
+        "*"
     ]
 
     class Config:
