@@ -114,7 +114,9 @@
     <!-- <link href="https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css" rel="stylesheet">; -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js">
+
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 
 <body>
@@ -1392,19 +1394,22 @@
     }
 
     // تابع محاسبه هش SHA-256
+    // async function sha256(message) {
+    //     // encode as UTF-8
+    //     const msgBuffer = new TextEncoder().encode(message);
+    //
+    //     // hash the message
+    //     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    //
+    //     // convert ArrayBuffer to Array
+    //     const hashArray = Array.from(new Uint8Array(hashBuffer));
+    //
+    //     // convert bytes to hex string
+    //     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    //     return hashHex;
+    // }
     async function sha256(message) {
-        // encode as UTF-8
-        const msgBuffer = new TextEncoder().encode(message);
-
-        // hash the message
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-
-        // convert ArrayBuffer to Array
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-        // convert bytes to hex string
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex;
+        return CryptoJS.SHA256(message).toString(CryptoJS.enc.Hex);
     }
 
     let editingStandardId = null; // null به معنی حالت افزودن استاندارد جدید
