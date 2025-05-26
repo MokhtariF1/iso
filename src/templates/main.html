@@ -518,14 +518,25 @@
             }
 
             div.innerHTML = `
-        ${statusHTML}
-        <!-- بقیه محتوا -->
+          <button class="favorite-btn" onclick="toggleFavorite('${item.code}')">
+            <i data-lucide="${favorites.includes(item.code) ? 'star' : 'star-off'}"></i>
+          </button>
+          ${statusHTML}
+          <div class="title">${item.code}</div>
+          <div class="desc">${item.desc}</div>
+          <div class="details">
+            ${item.details}<br>
+            <a href="${item.link}" target="_blank">مشاهده در سایت</a>
+            <div style="margin-top:10px;">
+              <label style="font-size: 13px;">وضعیت:</label>
         <select onchange="setStatus('${item.code}', this.value)" value="${item.status || 'normal'}">
             <option value="normal">عادی</option>
             <option value="review">در حال بازبینی</option>
             <option value="expired">منقضی‌شده</option>
         </select>
-    `;
+            </div>
+          </div>
+        `;
 
             div.addEventListener("click", e => {
                 if (!e.target.closest("button") && !e.target.closest("select")) {
