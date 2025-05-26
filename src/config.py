@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "your-secret-key-here"
     COOKIE_EXPIRE_TIME: int = 86400
-    SECURE_COOKIES: bool = True
+    SECURE_COOKIES: bool = False
     ALLOWED_ORIGINS: list = [
         # "http://localhost",
         # "http://localhost:8000",
