@@ -87,7 +87,7 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
 
 
 @app.post("/sign_up/")
-async def sign_up(info: SignUp, request: Request, response: Response, db: Session = Depends(get_db)):
+async def sign_up(info: SignUp, request: Request, db: Session = Depends(get_db)):
     if request.cookies.get("auth_key"):
         raise HTTPException(status_code=400, detail="Already logged in")
 
@@ -119,7 +119,7 @@ async def sign_up(info: SignUp, request: Request, response: Response, db: Sessio
     db.add(user)
     db.add(cookie)
     db.commit()
-
+    response = JSONResponse(content={"message": "Account created successfully"})
     response.set_cookie(
         key="auth_key",
         value=auth_cookie,
@@ -129,11 +129,11 @@ async def sign_up(info: SignUp, request: Request, response: Response, db: Sessio
         samesite="lax"
     )
 
-    return {"message": "Account created successfully"}
+    return response
 
 
 @app.post("/login/")
-async def login(info: LoginInfo, request: Request, response: Response, db: Session = Depends(get_db)):
+async def login(info: LoginInfo, request: Request, db: Session = Depends(get_db)):
     if request.cookies.get("auth_key"):
         raise HTTPException(status_code=400, detail="Already logged in")
 
@@ -155,16 +155,17 @@ async def login(info: LoginInfo, request: Request, response: Response, db: Sessi
 
     db.add(cookie)
     db.commit()
-
+    response = JSONResponse(content={"message": "Logged in successfully"})
     response.set_cookie(
         key="auth_key",
         value=auth_cookie,
         max_age=settings.COOKIE_EXPIRE_TIME,
         secure=settings.SECURE_COOKIES,
-        samesite="lax"
+        samesite="lax",
+        httponly=True
     )
 
-    return {"message": "Logged in successfully"}
+    return response
 
 
 @app.get("/login/")
