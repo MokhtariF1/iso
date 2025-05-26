@@ -18,10 +18,10 @@
                     credentials: 'include'
                 });
 
-                if (!authResponse.ok) {
-                    window.location.href = '/login/';
-                    return;
-                }
+                // if (!authResponse.ok) {
+                //     window.location.href = '/login/';
+                //     return;
+                // }
 
                 // Load standards data
                 await loadStandards();
@@ -30,7 +30,7 @@
                 initApp();
             } catch (error) {
                 console.error('Error:', error);
-                window.location.href = '/login/';
+                // window.location.href = '/login/';
             }
         }
 
