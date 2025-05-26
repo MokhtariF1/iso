@@ -160,7 +160,6 @@ async def login(info: LoginInfo, request: Request, response: Response, db: Sessi
         key="auth_key",
         value=auth_cookie,
         max_age=settings.COOKIE_EXPIRE_TIME,
-        httponly=True,
         secure=settings.SECURE_COOKIES,
         samesite="lax"
     )
