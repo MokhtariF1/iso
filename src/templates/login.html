@@ -4,406 +4,275 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ورود / ثبت نام - سامانه مرجع استانداردها</title>
-    <link href="../static/style.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com "></script>
     <style>
-        :root {
-            --primary: #1565c0;
-            --primary-light: #5e92f3;
-            --primary-dark: #003c8f;
-            --error: #d32f2f;
-            --success: #388e3c;
-            --text: #333;
-            --text-light: #666;
-            --bg: #f5f5f5;
-            --card-bg: #fff;
-            --border: #ddd;
-        }
-
-        body.dark {
-            --primary: #1976d2;
-            --primary-light: #63a4ff;
-            --primary-dark: #004ba0;
-            --error: #f44336;
-            --success: #4caf50;
-            --text: #f1f1f1;
-            --text-light: #aaa;
-            --bg: #121212;
-            --card-bg: #1e1e1e;
-            --border: #444;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn :wght@400;500;600;700&display=swap');
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Vazir', sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: background 0.3s, color 0.3s;
+            font-family: 'Vazirmatn', sans-serif;
         }
 
-        .auth-container {
-            max-width: 500px;
-            width: 90%;
-            margin: 50px auto;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: all 0.3s;
+        .bg-pattern {
+            background-image: radial-gradient(circle at 1px 1px, #6366F1 1px, transparent 0);
+            background-size: 20px 20px;
         }
 
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
+        .checkbox-container input[type="checkbox"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6366F1;
+            border-radius: 6px;
+            outline: none;
             cursor: pointer;
-            font-weight: bold;
-            color: var(--text-light);
-            transition: all 0.3s;
             position: relative;
+            margin-left: 8px;
         }
 
-        .tab.active {
-            color: var(--primary);
+        .checkbox-container input[type="checkbox"]:checked {
+            background-color: #6366F1;
         }
 
-        .tab.active::after {
-            content: '';
+        .checkbox-container input[type="checkbox"]:checked::after {
+            content: "✓";
             position: absolute;
-            bottom: 0;
+            color: white;
+            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tab-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .tab-button {
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            color: #4F46E5;
+        }
+
+        .tab-button.active::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
             left: 0;
             right: 0;
             height: 3px;
-            background: var(--primary);
+            background-color: #4F46E5;
         }
 
         .tab-content {
-            padding: 30px;
             display: none;
         }
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: var(--text);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 16px;
-            background: var(--card-bg);
-            color: var(--text);
-            transition: border 0.3s;
-            font-family: 'Vazir', sans-serif;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.2);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Vazir', sans-serif;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-
-        .btn-outline:hover {
-            background: rgba(21, 101, 192, 0.1);
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-        }
-
-        .alert-danger {
-            background: rgba(211, 47, 47, 0.1);
-            color: var(--error);
-            border: 1px solid rgba(211, 47, 47, 0.3);
-        }
-
-        .alert-success {
-            background: rgba(56, 142, 60, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(56, 142, 60, 0.3);
-        }
-
-        .alert i {
-            margin-left: 8px;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-light);
-            font-size: 14px;
-            margin-top: auto;
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .password-toggle {
-            position: relative;
-        }
-
-        .password-toggle input {
-            padding-right: 40px;
-        }
-
-        .password-toggle-btn {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
-    <div class="theme-toggle" onclick="toggleDarkMode()">
-        <i id="themeIcon" data-lucide="moon"></i>
-    </div>
+<body class="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100">
+    <!-- Background pattern -->
+    <div class="fixed inset-0 bg-pattern opacity-20"></div>
 
-    <div class="auth-container">
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('login')">ورود</div>
-            <div class="tab" onclick="switchTab('signup')">ثبت نام</div>
-        </div>
+    <!-- Floating decoration -->
+    <div class="fixed top-1/4 -left-16 w-64 h-64 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse"></div>
+    <div class="fixed bottom-1/4 -right-16 w-64 h-64 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse"></div>
 
-        <div class="tab-content active" id="login-tab">
-            <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">ورود به حساب کاربری</h2>
-
-            <div id="login-error" class="alert alert-danger" style="display: none;">
-                <i data-lucide="alert-circle"></i>
-                <span id="login-error-message"></span>
+    <div class="relative z-10 flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md glass-effect rounded-3xl shadow-xl overflow-hidden">
+            <!-- Tab Buttons -->
+            <div class="tab-buttons">
+                <div class="tab-button active" onclick="switchTab('login')">ورود</div>
+                <div class="tab-button" onclick="switchTab('signup')">ثبت نام</div>
             </div>
 
-            <div id="login-success" class="alert alert-success" style="display: none;">
-                <i data-lucide="check-circle"></i>
-                <span id="login-success-message"></span>
-            </div>
-
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-username">نام کاربری</label>
-                    <input type="text" id="login-username" class="form-control" required>
+            <!-- Login Form -->
+            <div id="login" class="tab-content active p-8">
+                <div class="text-center mb-6">
+                    <div class="mx-auto h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                        </svg>
+                    </div>
+                    <h2 class="mt-4 text-2xl font-bold text-gray-900">ورود به حساب</h2>
+                    <p class="mt-2 text-gray-600">خوش آمدید به سامانه مرجع استانداردها</p>
                 </div>
 
-                <div class="form-group password-toggle">
-                    <label for="login-password">رمز عبور</label>
-                    <input type="password" id="login-password" class="form-control" required>
-                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password')">
-                        <i data-lucide="eye"></i>
+                <!-- Error Message -->
+                <div id="login-error" class="mb-4 p-4 bg-red-50 text-red-700 rounded-lg hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block ml-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                    <span id="login-error-message"></span>
+                </div>
+
+                <!-- Success Message -->
+                <div id="login-success" class="mb-4 p-4 bg-green-50 text-green-700 rounded-lg hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block ml-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="login-success-message"></span>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="login-username" class="block text-sm font-medium text-gray-700 mb-1">نام کاربری</label>
+                        <input type="text" id="login-username" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">رمز عبور</label>
+                        <input type="password" id="login-password" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        <span id="login-btn-text">ورود</span>
+                        <span id="login-btn-spinner" class="hidden ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 animate-spin">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.631a9.754 9.754 0 01-1.252-3.977c-.244-1.091.021-2.2.703-3.024.682-.824 1.74-1.24 2.833-1.176.526.03.857.052 1.197.052.06.001.119.002.179.002.059-.001.118-.002.177-.002.532-.008.857-.03 1.197-.052 1.093-.064 2.151.352 2.833 1.176.682.824.947 1.933.703 3.024a9.756 9.756 0 01-1.252 3.977M15.974 9.348a.75.75 0 00-1.208.727l1.313 3.939a.75.75 0 001.208-.727l-1.313-3.939z" />
+                            </svg>
+                        </span>
                     </button>
+                </form>
+
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    <p>حساب دارید؟ <a href="#" onclick="switchTab('signup')" class="text-indigo-600 hover:text-indigo-500 font-medium">ثبت نام</a></p>
                 </div>
-
-                <button type="submit" class="btn btn-primary" id="login-btn">
-                    <span id="login-btn-text">ورود</span>
-                    <span id="login-btn-spinner" style="display: none;">
-                        <i data-lucide="loader" class="animate-spin"></i>
-                    </span>
-                </button>
-            </form>
-        </div>
-
-        <div class="tab-content" id="signup-tab">
-            <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">ثبت نام در سامانه</h2>
-
-            <div id="signup-error" class="alert alert-danger" style="display: none;">
-                <i data-lucide="alert-circle"></i>
-                <span id="signup-error-message"></span>
             </div>
 
-            <div id="signup-success" class="alert alert-success" style="display: none;">
-                <i data-lucide="check-circle"></i>
-                <span id="signup-success-message"></span>
+            <!-- Signup Form -->
+            <div id="signup" class="tab-content p-8">
+                <div class="text-center mb-6">
+                    <div class="mx-auto h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11.825 3.863 8.25 8.25 0 01-13.086 3.8A8.25 8.25 0 013.75 12c0-1.036.2-2.012.572-2.897A3.375 3.375 0 116.75 7.5h10.5z" />
+                        </svg>
+                    </div>
+                    <h2 class="mt-4 text-2xl font-bold text-gray-900">ثبت نام در سامانه</h2>
+                    <p class="mt-2 text-gray-600">ارتباطات امن با سامانه مرجع استانداردها</p>
+                </div>
+
+                <!-- Error Message -->
+                <div id="signup-error" class="mb-4 p-4 bg-red-50 text-red-700 rounded-lg hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block ml-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                    <span id="signup-error-message"></span>
+                </div>
+
+                <!-- Success Message -->
+                <div id="signup-success" class="mb-4 p-4 bg-green-50 text-green-700 rounded-lg hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block ml-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="signup-success-message"></span>
+                </div>
+
+                <!-- Signup Form -->
+                <form id="signup-form" class="space-y-6">
+                    <div>
+                        <label for="signup-fullname" class="block text-sm font-medium text-gray-700 mb-1">نام کامل</label>
+                        <input type="text" id="signup-fullname" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-indigo-500" required>
+                    </div>
+
+                    <div>
+                        <label for="signup-username" class="block text-sm font-medium text-gray-700 mb-1">نام کاربری</label>
+                        <input type="text" id="signup-username" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-indigo-500" required>
+                        <p class="mt-1 text-xs text-gray-500">حداقل ۳ و حداکثر ۳۲ کاراکتر (فقط حروف، اعداد و زیرخط)</p>
+                    </div>
+
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">ایمیل</label>
+                        <input type="email" id="signup-email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-indigo-500" required>
+                    </div>
+
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">رمز عبور</label>
+                        <input type="password" id="signup-password" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-indigo-500" required>
+                        <div class="mt-1 text-xs text-gray-500">
+                            <p class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-1 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>حداقل یک حرف بزرگ و یک حرف کوچک</span>
+                            </p>
+                            <p class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-1 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>حداقل یک عدد (0-9)</span>
+                            </p>
+                            <p class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-1 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>حداقل ۸ کاراکتر</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700 mb-1">تکرار رمز عبور</label>
+                        <input type="password" id="signup-confirm-password" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-indigo-500" required>
+                    </div>
+
+                    <div class="checkbox-container flex items-center">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms" class="text-sm text-gray-700">با شرایط و قوانین موافقم</label>
+                    </div>
+
+                    <button type="submit" id="signup-btn" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        <span id="signup-btn-text">ثبت نام</span>
+                        <span id="signup-btn-spinner" class="hidden ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 animate-spin">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.631a9.754 9.754 0 01-1.252-3.977c-.244-1.091.021-2.2.703-3.024.682-.824 1.74-1.24 2.833-1.176.526.03.857.052 1.197.052.06.001.119.002.179.002.059-.001.118-.002.177-.002.532-.008.857-.03 1.197-.052 1.093-.064 2.151.352 2.833 1.176.682.824.947 1.933.703 3.024a9.756 9.756 0 01-1.252 3.977M15.974 9.348a.75.75 0 00-1.208.727l1.313 3.939a.75.75 0 001.208-.727l-1.313-3.939z" />
+                            </svg>
+                        </span>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    <p>حساب دارید؟ <a href="#" onclick="switchTab('login')" class="text-indigo-600 hover:text-indigo-500 font-medium">ورود</a></p>
+                </div>
             </div>
 
-            <form id="signup-form">
-                <div class="form-group">
-                    <label for="signup-username">نام کاربری</label>
-                    <input type="text" id="signup-username" class="form-control" required>
-                    <small style="color: var(--text-light); font-size: 12px;">حداقل ۳ و حداکثر ۳۲ کاراکتر (فقط حروف، اعداد و زیرخط)</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="signup-fullname">نام کامل</label>
-                    <input type="text" id="signup-fullname" class="form-control" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="signup-email">ایمیل</label>
-                    <input type="email" id="signup-email" class="form-control" required>
-                </div>
-
-                <div class="form-group password-toggle">
-                    <label for="signup-password">رمز عبور</label>
-                    <input type="password" id="signup-password" class="form-control" required>
-                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signup-password')">
-                        <i data-lucide="eye"></i>
-                    </button>
-                    <small style="color: var(--text-light); font-size: 12px;">
-                        حداقل ۸ کاراکتر، شامل حروف بزرگ و کوچک و اعداد
-                    </small>
-                </div>
-
-                <div class="form-group password-toggle">
-                    <label for="signup-confirm-password">تکرار رمز عبور</label>
-                    <input type="password" id="signup-confirm-password" class="form-control" required>
-                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signup-confirm-password')">
-                        <i data-lucide="eye"></i>
-                    </button>
-                </div>
-
-                <button type="submit" class="btn btn-primary" id="signup-btn">
-                    <span id="signup-btn-text">ثبت نام</span>
-                    <span id="signup-btn-spinner" style="display: none;">
-                        <i data-lucide="loader" class="animate-spin"></i>
-                    </span>
-                </button>
-            </form>
+            <div class="mt-6 text-center text-sm text-gray-600 p-4">
+                <p>اطلاعات شما متعلق به شماست و رمزنگاری ما این را تضمین می‌کند</p>
+            </div>
         </div>
-    </div>
-
-    <div class="footer">
-        سامانه مرجع استانداردها - نسخه 1.0
     </div>
 
     <script>
-        // Initialize icons
-        lucide.createIcons();
-
-        // Check dark mode preference
-        if (localStorage.getItem('iso-theme') === 'dark') {
-            document.body.classList.add('dark');
-            document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
-            lucide.createIcons();
-        }
-
-        // Toggle dark mode
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark');
-            const icon = document.getElementById('themeIcon');
-            if (document.body.classList.contains('dark')) {
-                icon.setAttribute('data-lucide', 'sun');
-                localStorage.setItem('iso-theme', 'dark');
-            } else {
-                icon.setAttribute('data-lucide', 'moon');
-                localStorage.setItem('iso-theme', 'light');
-            }
-            lucide.createIcons();
-        }
-
-        // Switch between login and signup tabs
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
-            document.getElementById(`${tab}-tab`).classList.add('active');
-
-            // Clear all messages when switching tabs
-            hideAllMessages();
-        }
-
-        // Toggle password visibility
-        function togglePasswordVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            const btn = input.nextElementSibling;
-            const icon = btn.querySelector('i');
-
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        }
-
         // Hide all alert messages
         function hideAllMessages() {
-            document.querySelectorAll('.alert').forEach(a => a.style.display = 'none');
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('login-success').classList.add('hidden');
+            document.getElementById('signup-error').classList.add('hidden');
+            document.getElementById('signup-success').classList.add('hidden');
         }
 
         // Show error message
@@ -411,11 +280,8 @@
             hideAllMessages();
             const errorEl = document.getElementById(`${tab}-error`);
             const messageEl = document.getElementById(`${tab}-error-message`);
-
             messageEl.textContent = message;
-            errorEl.style.display = 'flex';
-
-            // Scroll to error
+            errorEl.classList.remove('hidden');
             errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -424,24 +290,24 @@
             hideAllMessages();
             const successEl = document.getElementById(`${tab}-success`);
             const messageEl = document.getElementById(`${tab}-success-message`);
-
             messageEl.textContent = message;
-            successEl.style.display = 'flex';
+            successEl.classList.remove('hidden');
+            successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         // Toggle loading state
-        function toggleLoading(btnId, isLoading) {
-            const btn = document.getElementById(btnId);
-            const text = document.getElementById(`${btnId}-text`);
-            const spinner = document.getElementById(`${btnId}-spinner`);
+        function toggleLoading(tab, isLoading) {
+            const btn = document.getElementById(`${tab}-btn`);
+            const text = document.getElementById(`${tab}-btn-text`);
+            const spinner = document.getElementById(`${tab}-btn-spinner`);
 
             if (isLoading) {
-                text.style.display = 'none';
-                spinner.style.display = 'inline-block';
+                text.classList.add('hidden');
+                spinner.classList.remove('hidden');
                 btn.disabled = true;
             } else {
-                text.style.display = 'inline-block';
-                spinner.style.display = 'none';
+                text.classList.remove('hidden');
+                spinner.classList.add('hidden');
                 btn.disabled = false;
             }
         }
@@ -449,7 +315,6 @@
         // Handle login form submission
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
 
@@ -458,7 +323,7 @@
                 return;
             }
 
-            toggleLoading('login-btn', true);
+            toggleLoading('login', true);
 
             try {
                 const response = await fetch('/login/', {
@@ -487,7 +352,7 @@
                 showError('login', 'خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید');
                 console.error('Login error:', error);
             } finally {
-                toggleLoading('login-btn', false);
+                toggleLoading('login', false);
             }
         });
 
@@ -500,10 +365,16 @@
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
             const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const termsAccepted = document.getElementById('terms').checked;
 
             // Basic validation
             if (!username || !fullName || !email || !password || !confirmPassword) {
                 showError('signup', 'لطفاً تمام فیلدهای ضروری را پر کنید');
+                return;
+            }
+
+            if (!termsAccepted) {
+                showError('signup', 'لطفاً با شرایط و قوانین موافقت کنید');
                 return;
             }
 
@@ -532,7 +403,7 @@
                 return;
             }
 
-            toggleLoading('signup-btn', true);
+            toggleLoading('signup', true);
 
             try {
                 const response = await fetch('/sign_up/', {
@@ -563,9 +434,21 @@
                 showError('signup', 'خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید');
                 console.error('Signup error:', error);
             } finally {
-                toggleLoading('signup-btn', false);
+                toggleLoading('signup', false);
             }
         });
+
+        // Tab switching function
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`.tab-button[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(tab).classList.add('active');
+
+            // Clear messages when switching tabs
+            hideAllMessages();
+        }
     </script>
 </body>
 </html>

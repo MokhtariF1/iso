@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr, validator
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer, Text
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer, Text, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -17,19 +17,21 @@ class User(Base):
     full_name = Column(String(64), nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     is_active = Column(Boolean, default=True)
-
-    cookies = relationship("AuthCookie", back_populates="user")
-
-
+    cookies = relationship("AuthCookie", back_populates="user_rel")
+    inventory = Column(Integer, default=0)
+    charge_wallet_count = Column(Integer, default=0)
+    wallet_all_charge = Column(Integer, default=0)
+    is_premium = Column(Boolean, default=False)
+    newNotification = Column(Boolean, default=False)
 class AuthCookie(Base):
     __tablename__ = "auth_cookies"
 
     value = Column(String(44), primary_key=True)  # 32 bytes base64 encoded
-    user_id = Column(String(32), ForeignKey("users.username"), nullable=False)
+    user = Column(String(32), ForeignKey("users.username"), nullable=False)
     expire_date = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
 
-    user = relationship("User", back_populates="cookies")
+    user_rel = relationship("User", back_populates="cookies")  # renamed to avoid conflict
 
 
 # Pydantic Models
@@ -70,6 +72,17 @@ class UserProfileResponse(BaseModel):
     is_active: bool
 
 
+class PaymentRequest(BaseModel):
+    amount: int
+    description: str
+
+class PaymentSuccessRequest(BaseModel):
+    success: str
+    status: str
+    trackId: str
+    orderId: str
+
+
 class Standard(Base):
     __tablename__ = "standards"
 
@@ -82,3 +95,24 @@ class Standard(Base):
     created_at = Column(DateTime, default=datetime.now)
     is_active = Column(Boolean, default=True)
     status = Column(String(20), default='normal')  # افزودن فیلد جدید
+
+
+class Payment(Base):
+    __tablename__ = 'pay'
+    authority = Column(String, primary_key=True)
+    user = Column(String)  # Foreign key if needed later
+    amount = Column(Integer)
+    description = Column(Text)
+    status = Column(String(20), nullable=False)
+
+class Notification(Base):
+    __tablename__ = 'notifications'
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    visited_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.now)
+    users_visited = Column(ARRAY(item_type=String()), default=[])
+class NotificationRequest(BaseModel):
+    title: str
+    content: str

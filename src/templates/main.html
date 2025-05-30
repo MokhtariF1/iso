@@ -40,7 +40,7 @@
 
                 // Load standards data
                 await loadStandards();
-
+                await checkNotifications()
                 // Initialize the rest of your app
                 initApp();
             } catch (error) {
@@ -177,6 +177,10 @@
     <button class="icon-btn" onclick="openProfilePanel()" title="پروفایل کاربری">
         <i data-lucide="user"></i>
     </button>
+    <button class="icon-btn" onclick="openNotificationsPanel()" title="اعلانات">
+        <i id="notificationIcon" data-lucide="bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;"></span>
+    </button>
 </div>
 
 <!-- <div class="favorites-toggle">
@@ -269,8 +273,8 @@
         <button class="close-panel" onclick="closeAdminPanel()">&times;</button>
     </div>
 
-
-    <div id="adminMenuContainer" style="display: none;">
+    <!-- منوی بخش‌ها -->
+    <div id="adminMenuContainer" style="display: block;">
         <ul class="admin-menu">
             <li>
                 <button class="btn btn-primary" onclick="showAdminSection('manageStandards')">
@@ -278,8 +282,8 @@
                 </button>
             </li>
             <li>
-                <button class="btn btn-danger" onclick="adminLogout()">
-                    <i data-lucide="log-out"></i> خروج از سیستم
+                <button class="btn btn-primary" onclick="showAdminSection('manageNotifications')">
+                    <i data-lucide="bell"></i> مدیریت اعلانات
                 </button>
             </li>
         </ul>
@@ -330,6 +334,36 @@
             </div>
         </div>
     </div>
+    <!-- بخش مدیریت اعلانات -->
+    <div id="manageNotificationsContainer" style="display: none;">
+        <h4>مدیریت اعلانات</h4>
+
+        <div class="admin-controls">
+            <button class="btn btn-success" onclick="showAddNotificationForm()">
+                <i data-lucide="plus"></i> افزودن اعلان جدید
+            </button>
+        </div>
+
+        <!-- لیست اعلانات -->
+        <div id="adminNotificationsList" class="notifications-list" style="margin-top: 20px;"></div>
+
+        <!-- فرم افزودن/ویرایش اعلان -->
+        <div id="editNotificationContainer" style="display: none; margin-top: 20px;">
+            <div class="form-group">
+                <label>عنوان</label>
+                <input type="text" id="editNotificationTitle" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>محتوا</label>
+                <textarea id="editNotificationContent" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="saveEditedNotification()">ذخیره</button>
+                <button class="btn btn-secondary" onclick="cancelEditNotification()">لغو</button>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- پنل پروفایل کاربری -->
@@ -348,12 +382,18 @@
             <h4 id="profileUsername"></h4>
             <p id="profileEmail"></p>
             <p id="profileFullName"></p>
+            <p id="is_premium"></p>
             <p id="profileJoinDate"></p>
         </div>
 
         <div class="profile-actions">
             <button class="btn btn-primary" onclick="showChangePasswordForm()">
                 <i data-lucide="key"></i> تغییر رمز عبور
+            </button>
+            <!-- در بخش profile-actions بعد از دکمه تغییر رمز عبور -->
+            <button id="upgradeToPremiumBtn" class="btn btn-success" onclick="upgradeToPremium()"
+                    style="margin-top: 10px; display: none;">
+                <i data-lucide="crown"></i> ارتقا به پریمیوم
             </button>
             <button class="btn btn-danger" onclick="logout()" style="margin-top: 10px;">
                 <i data-lucide="log-out"></i> خروج از حساب
@@ -381,6 +421,31 @@
         </div>
     </div>
 </div>
+<!-- پنل جزئیات اعلان -->
+<!-- پنل جزئیات اعلان (مشابه پنل ادمین) -->
+<div class="overlay" id="notificationDetailOverlay" style="display: none;"></div>
+<div class="project-panel" id="notificationDetailPanel" style="display: none;">
+    <div class="project-panel-header">
+        <h3 class="project-panel-title" id="notificationDetailTitle"></h3>
+        <button class="close-panel" onclick="closeNotificationDetail()">&times;</button>
+    </div>
+    <div class="notification-detail-content" id="notificationDetailContent"></div>
+    <div class="notification-detail-footer" id="notificationDetailFooter"></div>
+</div>
+<!-- پنل اعلانات -->
+<div class="overlay" id="notificationsOverlay"></div>
+<div class="project-panel" id="notificationsPanel">
+    <div class="project-panel-header">
+        <h3 class="project-panel-title">اعلانات</h3>
+        <button class="close-panel" onclick="closeNotificationsPanel()">&times;</button>
+    </div>
+
+    <!-- این بخش هم لیست و هم جزئیات را نمایش می‌دهد -->
+    <div id="notificationsList" class="notifications-list">
+        <!-- محتوا به صورت پویا تغییر می‌کند -->
+    </div>
+</div>
+
 
 <script>
     const itemsPerPage = 15;
@@ -388,13 +453,14 @@
     let showFavoritesOnly = false;
     let currentProject = null;
     let currentPhase = null;
-
+    let hasNewNotification = false;
     const container = document.getElementById("container");
     const searchInput = document.getElementById("search");
     const filterSelect = document.getElementById("filter");
     const pagination = document.getElementById("pagination");
     const projectPanel = document.getElementById("projectPanel");
     const projectOverlay = document.getElementById("projectOverlay");
+    let notificationId = null;
 
     // مدیریت پروژه‌ها در localStorage
     function getProjects() {
@@ -509,7 +575,7 @@
             div.className = "card";
 
             // بخش وضعیت (همیشه نمایش داده می‌شود)
-            const item_status = item.status === "normal"?"عادی":item.status === "review"?"درحال بازبینی":"منقضی شده"
+            const item_status = item.status === "normal" ? "عادی" : item.status === "review" ? "درحال بازبینی" : "منقضی شده"
             const statusLabel = `
             <div class="status-display" style="margin-top:10px;">
                 <span style="font-size: 13px;">وضعیت: </span>
@@ -555,6 +621,7 @@
         });
 
         lucide.createIcons();
+        updateNotificationBadge()
     }
 
     function toggleDarkMode() {
@@ -715,7 +782,7 @@
         });
     }
 
-    // Upload System 
+    // Upload System
     document.getElementById("uploadTxt").addEventListener("change", handleFileUpload);
 
     function handleFileUpload(event) {
@@ -1171,7 +1238,7 @@
         </tr>
       </thead>
       <tbody>
-        
+
         ${currentProject.standards.map(standardCode => {
             const standard = data.find(item => item.code === standardCode);
             return standard ? `
@@ -1605,6 +1672,36 @@
         document.getElementById('profileOverlay').classList.remove('active');
     }
 
+    async function upgradeToPremium() {
+        try {
+            const response = await fetch('/api/payments/create-pay/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    amount: 10000, // مبلغ ثابت (میتوانید از تنظیمات استفاده کنید)
+                    description: "pay for activate premium"
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create payment');
+            }
+
+            const result = await response.json();
+            if (result.payment_url) {
+                window.location.href = result.payment_url;
+            } else {
+                throw new Error('Payment URL not found');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('خطا در ایجاد درخواست پرداخت: ' + error.message);
+        }
+    }
+
     async function loadProfileInfo() {
         try {
             const response = await fetch('/api/user/profile', {
@@ -1620,10 +1717,16 @@
             document.getElementById('profileUsername').textContent = userData.username;
             document.getElementById('profileEmail').textContent = userData.email;
             document.getElementById('profileFullName').textContent = userData.full_name;
-
+            const premium = userData.is_premium ? "👑کاربر پریمیوم👑" : ""
+            document.getElementById('is_premium').textContent = premium;
             const joinDate = new Date(userData.created_at);
             document.getElementById('profileJoinDate').textContent = `عضو شده در: ${joinDate.toLocaleDateString('fa-IR')}`;
-
+            const upgradeBtn = document.getElementById('upgradeToPremiumBtn');
+            if (!userData.is_premium) {
+                upgradeBtn.style.display = 'block';
+            } else {
+                upgradeBtn.style.display = 'none';
+            }
             lucide.createIcons();
         } catch (error) {
             console.error('Error loading profile:', error);
@@ -1723,6 +1826,318 @@
             });
         } catch (error) {
             console.error('Error loading categories:', error);
+        }
+    }
+
+    // نمایش بخش مورد نظر در پنل ادمین
+    function showAdminSection(section) {
+        document.getElementById('manageStandardsContainer').style.display = 'none';
+        document.getElementById('manageNotificationsContainer').style.display = 'none';
+
+        if (section === 'manageStandards') {
+            document.getElementById('manageStandardsContainer').style.display = 'block';
+            loadCategoriesForAdmin();
+            searchAdminStandards();
+        } else if (section === 'manageNotifications') {
+            document.getElementById('manageNotificationsContainer').style.display = 'block';
+            loadNotificationsForAdmin();
+        }
+    }
+
+    async function loadNotificationsForAdmin() {
+        try {
+            const response = await fetch('/api/notifications/', {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load notifications');
+            }
+
+            const data = await response.json();
+            renderAdminNotifications(data.notifications);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+            document.getElementById('adminNotificationsList').innerHTML =
+                '<p>خطا در بارگذاری اعلانات</p>';
+        }
+    }
+
+    // نمایش اعلانات در لیست
+    function renderAdminNotifications(notifications) {
+        const list = document.getElementById('adminNotificationsList');
+        if (notifications.length === 0) {
+            list.innerHTML = '<p>هیچ اعلانی وجود ندارد</p>';
+            return;
+        }
+
+        list.innerHTML = notifications.map(notification => `
+        <div class="notification-item">
+            <div>
+                <strong>${notification.title}</strong>
+                <div>${notification.content}</div>
+                <div class="text-muted">${new Date(notification.created_at).toLocaleDateString('fa-IR')}</div>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="editNotification(${notification.id})">ویرایش</button>
+                <button class="btn btn-danger" onclick="deleteNotification(${notification.id})">حذف</button>
+            </div>
+        </div>
+    `).join('');
+    }
+
+    // نمایش فرم افزودن اعلان
+    function showAddNotificationForm() {
+        editingNotificationId = null;
+        document.getElementById('editNotificationTitle').value = '';
+        document.getElementById('editNotificationContent').value = '';
+        document.getElementById('editNotificationContainer').style.display = 'block';
+    }
+
+    let editingNotificationId = null; // این متغیر را در بالای فایل اضافه کنید
+
+    async function editNotification(notificationId) {
+        try {
+            // دریافت اطلاعات اعلان از سرور
+            const response = await fetch(`/api/notifications/${notificationId}/`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch notification');
+            }
+
+            const notification = await response.json();
+
+            // پر کردن فرم با اطلاعات اعلان
+            editingNotificationId = notificationId;
+            document.getElementById('editNotificationTitle').value = notification.title;
+            document.getElementById('editNotificationContent').value = notification.content;
+            document.getElementById('editNotificationContainer').style.display = 'block';
+        } catch (error) {
+            console.error('Error fetching notification:', error);
+            alert('خطا در دریافت اطلاعات اعلان');
+        }
+    }
+
+    // لغو ویرایش
+    function cancelEditNotification() {
+        document.getElementById('editNotificationContainer').style.display = 'none';
+    }
+
+    async function saveEditedNotification() {
+        const title = document.getElementById('editNotificationTitle').value;
+        const content = document.getElementById('editNotificationContent').value;
+
+        if (!title || !content) {
+            alert('لطفاً عنوان و محتوای اعلان را وارد کنید');
+            return;
+        }
+
+        const url = editingNotificationId
+            ? `/api/notifications/${editingNotificationId}/`
+            : '/api/notifications/add/';
+
+        const method = editingNotificationId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    title: title,
+                    content: content
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to save notification');
+            }
+
+            cancelEditNotification();
+            await loadNotificationsForAdmin();
+        } catch (error) {
+            console.error('Error saving notification:', error);
+            alert(`خطا در ذخیره اعلان: ${error.message}`);
+        }
+    }
+
+    // حذف اعلان
+    async function deleteNotification(notificationId) {
+        if (!confirm('آیا از حذف این اعلان مطمئن هستید؟')) return;
+
+        try {
+            const response = await fetch(`/api/notifications/${notificationId}/`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                loadNotificationsForAdmin();
+            }
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+        }
+    }
+
+
+    async function checkNotifications() {
+        try {
+            const response = await fetch('/api/user/profile', {
+                credentials: 'include'
+            });
+            const userData = await response.json();
+            hasNewNotification = userData.has_notification;
+            updateNotificationBadge();
+        } catch (error) {
+            console.error('Error checking notifications:', error);
+        }
+    }
+
+    function updateNotificationBadge() {
+        const badge = document.getElementById('notificationBadge');
+        if (hasNewNotification) {
+            badge.style.display = 'flex';
+            badge.textContent = '!';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    async function openNotificationsPanel() {
+        document.getElementById('notificationsPanel').classList.add('open');
+        document.getElementById('notificationsOverlay').classList.add('active');
+        await loadNotifications();
+        // پس از مشاهده اعلانات، وضعیت را به روز می‌کنیم
+        if (hasNewNotification) {
+            await markNotificationsAsSeen();
+            hasNewNotification = false;
+            updateNotificationBadge();
+        }
+    }
+
+    function closeNotificationsPanel() {
+        document.getElementById('notificationsPanel').classList.remove('open');
+        document.getElementById('notificationsOverlay').classList.remove('active');
+    }
+
+    async function loadNotifications() {
+        try {
+            const response = await fetch('/api/notifications/user/', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            renderNotifications(data.notifications);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+            document.getElementById('notificationsList').innerHTML = `
+            <p>خطا در بارگذاری اعلانات</p>
+            <button class="btn" onclick="closeNotificationsPanel()">بستن</button>
+        `;
+        }
+    }
+
+    function renderNotifications(notifications) {
+        const container = document.getElementById('notificationsList');
+        if (notifications.length === 0) {
+            container.innerHTML = '<p>هیچ اعلانی وجود ندارد</p>';
+            return;
+        }
+
+        container.innerHTML = notifications.map(notification => `
+        <div class="notification-item" onclick="showNotificationDetail(${notification.id})">
+            <h4>${notification.title}</h4>
+            <p>${notification.content.substring(0, 100)}${notification.content.length > 100 ? '...' : ''}</p>
+            <div class="date">${new Date(notification.created_at).toLocaleDateString('fa-IR')}</div>
+        </div>
+    `).join('');
+    }
+
+    async function showNotificationDetail(notificationId) {
+        try {
+            const response = await fetch(`/api/notifications/${notificationId}/`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('خطا در دریافت جزئیات');
+
+            const notification = await response.json();
+
+            // افزایش تعداد بازدیدها
+            await incrementNotificationViews(notificationId);
+
+            // تغییر محتوای پنل به حالت جزئیات
+            document.getElementById('notificationsList').innerHTML = `
+            <div class="notification-detail">
+                <div class="notification-header">
+                    <h3>${notification.title}</h3>
+                    <button class="btn btn-back" onclick="backToNotificationsList()">
+                        <i data-lucide="arrow-right"></i> بازگشت
+                    </button>
+                </div>
+                <div class="notification-content">
+                    ${notification.content}
+                </div>
+                <div class="notification-footer">
+                    <div>تاریخ: ${new Date(notification.created_at).toLocaleDateString('fa-IR')}</div>
+                    <div>تعداد مشاهده: ${notification.visited_count}</div>
+                </div>
+            </div>
+        `;
+
+            // آپدیت آیکون‌ها
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('notificationsList').innerHTML = `
+            <p>خطا در بارگذاری جزئیات اعلان</p>
+            <button class="btn btn-back" onclick="backToNotificationsList()">
+                <i data-lucide="arrow-right"></i> بازگشت
+            </button>
+        `;
+            lucide.createIcons();
+        }
+    }
+
+    function backToNotificationsList() {
+        loadNotifications();
+    }
+
+    // تابع بستن جزئیات اعلان (مشابه پنل ادمین)
+    function closeNotificationDetail() {
+        document.getElementById('notificationDetailPanel').style.display = 'none';
+        document.getElementById('notificationDetailOverlay').style.display = 'none';
+    }
+
+    // اضافه کردن event listener برای overlay (مهم!)
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('notificationDetailOverlay').addEventListener('click', closeNotificationDetail);
+    });
+
+    async function markNotificationsAsSeen() {
+        try {
+            await fetch('/api/notifications/mark-as-seen/', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error marking notifications as seen:', error);
+        }
+    }
+
+    async function incrementNotificationViews(notificationId) {
+        try {
+            await fetch(`/api/notifications/${notificationId}/increment-views/`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error incrementing notification views:', error);
         }
     }
 </script>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="{{ url_for('static', path='./app.js') }}"></script>
+    <link
+            rel="stylesheet"
+            href="{{ url_for('static', path='css/login_style.css') }}"
+    />
+    <link
+            rel="stylesheet"
+            href="{{ url_for('static', path='font/font.css') }}"
+    />
+    <title>پرداخت موفق</title>
+</head>
+
+<body class="h-screen">
+<div class="contNotSuc h-screen flex justify-center items-center">
+    <div
+            class="notSucMn flex flex-col items-center justify-center gap-20 w-96 h-96 rounded-xl shadow-md"
+    >
+        <div
+                class="headerNSuc p-4 bg-green-600 w-96 h-40 flex flex-col items-center justify-center gap-2"
+        >
+            <ion-icon
+                    class="text-9xl text-slate-200"
+                    name="checkmark-circle-outline"
+            ></ion-icon>
+            <h1 class="text-3xl text-slate-200">پرداخت موفق</h1>
+        </div>
+        <div
+                class="cntMsg text-xl flex flex-col gap-3 items-center justify-center text-center"
+        >
+            <span class="textSc text-green-600">پرداخت با موفقیت انجام شد</span>
+            <span
+                    class="backDsh cursor-pointer bg-sky-700 p-4 text-slate-200 rounded-md"
+            >          <a href="/">
+
+            بازگشت به داشبورد
+          </a></span
+            >
+        </div>
+    </div>
+</div>
+
+<script
+        type="module"
+        src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+></script>
+<script
+        nomodule
+        src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+></script>
+</body>
+</html>
