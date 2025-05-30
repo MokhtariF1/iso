@@ -1,26 +1,17 @@
 import json
-import random
-import requests
 from fastapi import FastAPI, Request, HTTPException, Depends, status, Query
 from fastapi.responses import Response, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
-from rfc3986.parseresult import authority_from
 from sqlalchemy import desc
 from sqlalchemy.orm import sessionmaker, Session
 from passlib.context import CryptContext
 import secrets
 from datetime import datetime, timedelta
-from typing import Dict, Any
-
-from yaml import AnchorToken
-
-from models import Base, User, AuthCookie, ChangePasswordRequest, UserProfileResponse, LoginInfo, SignUp, Standard, \
-    Payment, PaymentRequest, PaymentSuccessRequest, NotificationRequest, Notification
-from config import settings
-from database import get_db
+from models import User, AuthCookie, ChangePasswordRequest, UserProfileResponse, LoginInfo, SignUp, Standard, \
+    PaymentRequest, NotificationRequest, Notification
 from zarinpal_core import *
 
 # Security configurations
@@ -429,6 +420,8 @@ async def notifications(db: Session = Depends(get_db), user: User = Depends(get_
     db.commit()
     # notifications = notifications[::-1]
     return Response(json.dumps({"notifications": notifications}, indent=4, default=str))
+
+
 #
 # main.py
 
