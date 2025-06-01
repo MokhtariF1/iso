@@ -18,7 +18,7 @@ def initiate_payment(amount, description):
         #
         # print("Payment created successfully:", response)
         data = {
-            "merchant": settings.merchant,
+            "merchant_id": settings.merchant,
             "amount": amount,
             "description": description,
             "callback_url": settings.callback_url,
