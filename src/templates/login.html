@@ -343,7 +343,7 @@
                 if (response.ok) {
                     showSuccess('login', 'ورود با موفقیت انجام شد. در حال انتقال...');
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = '/standards';
                     }, 1500);
                 } else {
                     showError('login', data.message || 'نام کاربری یا رمز عبور اشتباه است');
@@ -425,7 +425,7 @@
                 if (response.ok) {
                     showSuccess('signup', 'ثبت نام با موفقیت انجام شد. در حال انتقال...');
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = '/standards';
                     }, 1500);
                 } else {
                     showError('signup', data.message || 'خطا در ثبت نام. لطفاً دوباره تلاش کنید');
