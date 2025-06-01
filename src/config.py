@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list = ["*"]
     merchant: str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     domain: str = "https://standards.ncp3.xyz/standards"
-    callback_url: str = "https://standards.ncp3.xyz/api/payments/success"
+    callback_url: str = "https://standards.ncp3.xyz/payments/success"
     zarinpal: str = "https://sandbox.zarinpal.com/"
     config: Config = Config(merchant_id=merchant, sandbox=True)
 

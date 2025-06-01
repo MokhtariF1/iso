@@ -318,7 +318,7 @@ async def update_standard(
     return standard
 
 
-@app.get("/api/payments/success")
+@app.get("/payments/success")
 async def pay_success(request: Request, Authority: str, Status: str,
                       db: Session = Depends(get_db), find_user: User = Depends(get_current_user)):
     if find_user.is_premium:
