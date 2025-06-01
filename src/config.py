@@ -13,14 +13,14 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self):
-        return f'postgresql://standards_postgres:Hossein_90@localhost:5432/standards_iso'
+        return f'postgresql://standard_postgres:Hossein_90@localhost:5432/standard_iso'
 
     SECRET_KEY: str = "your-secret-key-here"
     COOKIE_EXPIRE_TIME: int = 86400
     SECURE_COOKIES: bool = False
     ALLOWED_ORIGINS: list = ["*"]
     merchant: str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    domain: str = "http://localhost:8000/"
+    domain: str = "https://standards.ncp3.xyz/standards"
     config: Config = Config(merchant_id=merchant, sandbox=True)
 
 

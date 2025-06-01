@@ -30,8 +30,8 @@ app.add_middleware(
 )
 
 # Static files and templates
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
-templates = Jinja2Templates(directory="src/templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 # Security utilities
@@ -154,7 +154,7 @@ async def login(info: LoginInfo, request: Request, db: Session = Depends(get_db)
 @app.get("/login/")
 async def login_page(request: Request):
     if request.cookies.get("auth_key"):
-        return RedirectResponse("/")
+        return RedirectResponse("/standards")
     return templates.TemplateResponse("login.html", {"request": request})
 
 
@@ -173,7 +173,7 @@ async def logout(request: Request, response: Response, db: Session = Depends(get
     return {"message": "Logged out successfully"}
 
 
-@app.get("/")
+@app.get("/standards")
 async def main(request: Request, db: Session = Depends(get_db)):
     try:
         current_user = await get_current_user(request, db)
