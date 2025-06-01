@@ -1,25 +1,33 @@
-from zarinpal import ZarinPal
+# from zarinpal import ZarinPal
 from config import settings
 from database import get_db
 from models import Payment
+import requests
 
 
 def initiate_payment(amount, description):
     authority = None
     payment_url = None
     try:
-        zarinpal = ZarinPal(settings.config)
-        response = zarinpal.payments.create({
+        # zarinpal = ZarinPal(settings.config)
+        # response = zarinpal.payments.create({
+        #     "amount": amount,
+        #     "callback_url": settings.domain + "api/payments/success",
+        #     "description": description,
+        # })
+        #
+        # print("Payment created successfully:", response)
+        data = {
+            "merchant": settings.merchant,
             "amount": amount,
-            "callback_url": settings.domain + "api/payments/success",
             "description": description,
-        })
-
-        print("Payment created successfully:", response)
-
+            "callback_url": settings.callback_url,
+        }
+        response = requests.post(f"{settings.zarinpal}pg/v4/payment/request.json", json=data)
+        response = response.json()
         if "data" in response and "authority" in response["data"]:
             authority = response["data"]["authority"]
-            payment_url = zarinpal.payments.generate_payment_url(authority)
+            payment_url = f"{settings.zarinpal}pg/StartPay/{authority}"
             print("Payment URL:", payment_url)
         else:
             print("Authority not found in response.")
@@ -45,11 +53,18 @@ def verify_payment(authority, status):
 
         if amount:
             try:
-                zarinpal = ZarinPal(settings.config)
-                response = zarinpal.verifications.verify({
+                # zarinpal = ZarinPal(settings.config)
+                # response = zarinpal.verifications.verify({
+                #     "amount": amount,
+                #     "authority": authority,
+                # })
+                data = {
+                    "merchant_id": settings.merchant,
                     "amount": amount,
                     "authority": authority,
-                })
+                }
+                response = requests.post(f"{settings.zarinpal}pg/v4/payment/verify.json", json=data)
+                response = response.json()
                 if response["data"]["code"] == 100:
                     print("Payment Verified:")
                     print("Reference ID:", response["data"]["ref_id"])
@@ -73,24 +88,24 @@ def verify_payment(authority, status):
         return None
 
 
-def injquery(authority, status):
-    if status == "OK":
-        amount = get_amount_from_database(authority)
-
-        if amount:
-            try:
-                zarinpal = ZarinPal(settings.config)
-                response = zarinpal.inquiries.inquire({
-                    "authority": authority,
-                })
-
-                return response
-            except Exception as e:
-                print("Payment Verification Failed:", e)
-        else:
-            print("No Matching Transaction Found For This Authority Code.")
-    else:
-        print("Transaction was cancelled or failed.")
+# def injquery(authority, status):
+#     if status == "OK":
+#         amount = get_amount_from_database(authority)
+#
+#         if amount:
+#             try:
+#                 zarinpal = ZarinPal(settings.config)
+#                 response = zarinpal.inquiries.inquire({
+#                     "authority": authority,
+#                 })
+#
+#                 return response
+#             except Exception as e:
+#                 print("Payment Verification Failed:", e)
+#         else:
+#             print("No Matching Transaction Found For This Authority Code.")
+#     else:
+#         print("Transaction was cancelled or failed.")
 
 # if __name__ == "__main__":
 #     # payment = initiate_payment()
