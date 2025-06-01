@@ -25,6 +25,7 @@ def initiate_payment(amount, description):
         }
         response = requests.post(f"{settings.zarinpal}pg/v4/payment/request.json", json=data)
         response = response.json()
+        print(response)
         if "data" in response and "authority" in response["data"]:
             authority = response["data"]["authority"]
             payment_url = f"{settings.zarinpal}pg/StartPay/{authority}"
